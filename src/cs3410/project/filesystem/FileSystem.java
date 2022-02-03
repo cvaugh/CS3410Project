@@ -1,28 +1,24 @@
 package cs3410.project.filesystem;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 public class FileSystem {
-    public final FSDirectory root = new FSDirectory("");
+    public final FSDirectory root = new FSDirectory(null, "");
     private File container;
 
     public FileSystem(File container) {
         this.container = container;
     }
 
-    public List<FileSystemObject> traverse(FSDirectory parent) {
-        List<FileSystemObject> list = new ArrayList<FileSystemObject>();
-        list.add(parent);
-        for(FileSystemObject obj : parent.children) {
+    public void traverse(FSDirectory root, FSAction action) {
+        action.run(root);
+        for(FileSystemObject obj : root.children) {
             if(obj instanceof FSDirectory) {
-                list.addAll(traverse((FSDirectory) obj));
+                traverse((FSDirectory) obj, action);
             } else {
-                list.add(obj);
+                action.run(obj);
             }
         }
-        return list;
     }
 
     public FSFile newFile(FSDirectory parent, String name) {
@@ -76,5 +72,45 @@ public class FileSystem {
 
     public FileSystemObject getObject(String path) {
         return getObject(root, path);
+    }
+
+    private void getTreeAsString(FSDirectory root, int depth, int index, StringBuilder sb, boolean utf8) {
+        if(depth != 0) {
+            for(int i = 0; i < depth - 1; i++) {
+                sb.append(utf8 ? "\u2502  " : "|   ");
+            }
+            if(index == root.parent.children.size() - 1) {
+                sb.append(utf8 ? "\u2514\u2500\u2500" : "+-- ");
+            } else {
+                sb.append(utf8 ? "\u251C\u2500\u2500" : "+-- ");
+            }
+        }
+        sb.append(root.name);
+        sb.append("/");
+        sb.append("\n");
+        index = 0;
+        for(FileSystemObject obj : root.children) {
+            if(obj instanceof FSDirectory) {
+                getTreeAsString((FSDirectory) obj, depth + 1, index, sb, utf8);
+            } else {
+                for(int i = 0; i < depth; i++) {
+                    sb.append(utf8 ? "\u2502  " : "|   ");
+                }
+                if(index == root.children.size() - 1) {
+                    sb.append(utf8 ? "\u2514\u2500\u2500" : "+-- ");
+                } else {
+                    sb.append(utf8 ? "\u251C\u2500\u2500" : "+-- ");
+                }
+                sb.append(obj.name);
+                sb.append("\n");
+            }
+            index++;
+        }
+    }
+
+    public void getTreeAsString(FSDirectory root, boolean utf8) {
+        StringBuilder sb = new StringBuilder();
+        getTreeAsString(root, 0, 0, sb, utf8);
+        System.out.println(sb);
     }
 }
