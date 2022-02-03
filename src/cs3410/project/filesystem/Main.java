@@ -13,8 +13,10 @@ public class Main {
         fs.newFile(etc, "settings.conf");
         FSDirectory misc = fs.newDirectory(etc, "misc");
         fs.newFile(misc, "test.txt");
-        for(FileSystemObject obj : fs.traverse(fs.root)) {
-            System.out.println(obj);
-        }
+        fs.getTreeAsString(fs.root, true);
     }
+
+    // TODO: register shell extension handler for reading from/reading to file
+    // system container using Windows file explorer
+    // public static native void registerShellExtensionHandler();
 }
