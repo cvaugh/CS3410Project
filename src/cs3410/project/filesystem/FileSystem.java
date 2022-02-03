@@ -1,6 +1,8 @@
 package cs3410.project.filesystem;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FileSystem {
     public final FSDirectory root = new FSDirectory("");
@@ -8,6 +10,19 @@ public class FileSystem {
 
     public FileSystem(File container) {
         this.container = container;
+    }
+
+    public List<FileSystemObject> traverse(FSDirectory parent) {
+        List<FileSystemObject> list = new ArrayList<FileSystemObject>();
+        list.add(parent);
+        for(FileSystemObject obj : parent.children) {
+            if(obj instanceof FSDirectory) {
+                list.addAll(traverse((FSDirectory) obj));
+            } else {
+                list.add(obj);
+            }
+        }
+        return list;
     }
 
     public FSFile newFile(FSDirectory parent, String name) {

@@ -9,8 +9,9 @@ public abstract class FileSystemObject implements Comparable<FileSystemObject> {
     }
 
     public String getPath() {
+        if(this.isRoot()) return "";
         StringBuilder sb = new StringBuilder();
-        if(!this.isRoot()) sb.append('/');
+        sb.append('/');
         sb.append(name);
         if(parent != null) sb.insert(0, parent.getPath());
         return sb.toString();
@@ -27,5 +28,9 @@ public abstract class FileSystemObject implements Comparable<FileSystemObject> {
     @Override
     public int compareTo(FileSystemObject obj) {
         return this.name.compareTo(obj.name);
+    }
+
+    public String toString() {
+        return this.isRoot() ? "/" : getPath();
     }
 }
