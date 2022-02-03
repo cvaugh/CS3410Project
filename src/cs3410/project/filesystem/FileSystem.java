@@ -3,8 +3,14 @@ package cs3410.project.filesystem;
 import java.io.File;
 
 public class FileSystem {
+    /** Signifies the start of a file */
+    public static final byte[] FILE_START_MARKER = new byte[] { (byte) 0xFF, (byte) 0xFF };
+    /** Signifies the end of the file size (in bytes) following FILE_START_MARKER */
+    public static final byte[] FILE_SIZE_MARKER = new byte[] { (byte) 0xAA, (byte) 0xAA };
+    /** Signifies the end of a file */
+    public static final byte[] FILE_END_MARKER = new byte[] { (byte) 0xDE, (byte) 0xAD, (byte) 0xFE, (byte) 0xED };
     public final FSDirectory root = new FSDirectory(null, "");
-    private File container;
+    public File container;
 
     public FileSystem(File container) {
         this.container = container;
@@ -23,7 +29,7 @@ public class FileSystem {
 
     public FSFile newFile(FSDirectory parent, String name) {
         if(name.isEmpty()) return null;
-        if(!exists(parent, name)) return null;
+        if(exists(parent, name)) return null;
         FSFile file = new FSFile(name);
         parent.children.add(file);
         file.parent = parent;
@@ -32,15 +38,37 @@ public class FileSystem {
 
     public FSDirectory newDirectory(FSDirectory parent, String name) {
         if(name.isEmpty()) return null;
-        if(!exists(parent, name)) return null;
+        if(exists(parent, name)) return null;
         FSDirectory dir = new FSDirectory(name);
         parent.children.add(dir);
         dir.parent = parent;
         return dir;
     }
 
+    public FSDirectory createParents(FSDirectory root, String path) {
+        if(path.charAt(0) == '/') {
+            root = this.root;
+            path = path.substring(1);
+        }
+        if(path.isEmpty()) return null;
+        if(!path.contains("/")) return root;
+        String[] splitPath = path.split("/", 2);
+        if(splitPath.length == 0) return null;
+        FileSystemObject child = null;
+        if(exists(root, splitPath[0])) {
+            child = root.getChild(splitPath[0]);
+        } else {
+            child = newDirectory(root, splitPath[0]);
+        }
+        if(!(child instanceof FSDirectory)) {
+            throw new RuntimeException(
+                    "Error while recursively creating parents: '" + child.name + "' exists and is not a directory");
+        }
+        return createParents((FSDirectory) child, splitPath[1]);
+    }
+
     public boolean exists(String path) {
-        return getObject(path) == null;
+        return getObject(path) != null;
     }
 
     public boolean exists(FSDirectory parent, String name) {
@@ -56,6 +84,10 @@ public class FileSystem {
     }
 
     public FileSystemObject getObject(FSDirectory parent, String path) {
+        if(path.charAt(0) == '/') {
+            parent = root;
+            path = path.substring(1);
+        }
         if(path.isEmpty()) return null;
         if(!path.contains("/")) return parent.getChild(path);
         String[] splitPath = path.split("/", 2);

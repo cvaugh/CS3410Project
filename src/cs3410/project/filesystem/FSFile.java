@@ -3,7 +3,7 @@ package cs3410.project.filesystem;
 public class FSFile extends FileSystemObject {
     private long startPosition;
     private long size;
-    private byte[] content;
+    private byte[] data;
 
     public FSFile(FSDirectory parent, String name) {
         super(parent, name);
@@ -14,6 +14,10 @@ public class FSFile extends FileSystemObject {
     }
 
     public void write(byte[] data) {
+        // TODO
+    }
+
+    public void append(byte[] data) {
         // TODO
     }
 
