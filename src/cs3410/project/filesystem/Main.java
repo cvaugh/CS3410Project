@@ -15,7 +15,7 @@ public class Main {
             try {
                 for(int i = 0; i < args.length; i++) {
                     // Copy an external file into the file system
-                    if(args[i].equalsIgnoreCase("-c")) {
+                    if(args[i].equals("-c")) {
                         File file = new File(args[i + 1]);
                         if(!file.exists()) {
                             throw new RuntimeException("File does not exist: " + file.getAbsolutePath());
@@ -27,7 +27,7 @@ public class Main {
                         toCopy = file;
                     }
                     // Set the internal destination path of the external file
-                    if(args[i].equalsIgnoreCase("-d")) {
+                    if(args[i].equals("-d")) {
                         toCopyDestination = args[i + 1];
                     }
                 }
@@ -41,12 +41,14 @@ public class Main {
         }
 
         fs = new FileSystem(new File("test.fs"));
-        if(!fs.container.exists()) {
-            try {
+        try {
+            if(fs.container.exists()) {
+                fs.readContainer();
+            } else {
                 fs.container.createNewFile();
-            } catch(IOException e) {
-                e.printStackTrace();
             }
+        } catch(IOException e) {
+            e.printStackTrace();
         }
         if(toCopy != null) {
             if(toCopyDestination.isEmpty()) {
@@ -67,7 +69,11 @@ public class Main {
         }
         fs.getTreeAsString(fs.root, true);
 
-        fs.writeContainer();
+        try {
+            fs.writeContainer();
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
     }
 
     // TODO: register shell extension handler for reading from/reading to file

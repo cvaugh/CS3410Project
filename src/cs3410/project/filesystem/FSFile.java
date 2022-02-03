@@ -1,9 +1,12 @@
 package cs3410.project.filesystem;
 
+import java.io.IOException;
+import java.util.Arrays;
+
 public class FSFile extends FileSystemObject {
-    private long startPosition;
-    private long size;
-    private byte[] data;
+    public int startPosition;
+    public byte[] data;
+    public boolean writing = false;
 
     public FSFile(FSDirectory parent, String name) {
         super(parent, name);
@@ -13,19 +16,25 @@ public class FSFile extends FileSystemObject {
         super(name);
     }
 
-    public void write(byte[] data) {
-        // TODO
-    }
-
-    public void append(byte[] data) {
-        // TODO
+    public void write(byte[] data) throws IOException {
+        this.data = data;
+        writing = true;
+        startPosition = Main.fs.findIndexFor(this);
+        writing = false;
+        Main.fs.writeContainer();
     }
 
     public void read() {
-        // TODO
+        // TODO only read files as needed, rather than keeping everything in memory
     }
 
     public void delete() {
-        // TODO
+        startPosition = -1;
+        Arrays.fill(data, (byte) 0);
+    }
+
+    public int getTotalSize() {
+        return (data == null ? 0 : data.length) + 4 + FileSystem.FILE_START_MARKER.length
+                + FileSystem.FILE_SIZE_MARKER.length + FileSystem.FILE_END_MARKER.length;
     }
 }

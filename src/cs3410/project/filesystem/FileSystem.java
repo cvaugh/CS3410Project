@@ -1,6 +1,11 @@
 package cs3410.project.filesystem;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 public class FileSystem {
     /** Signifies the start of a file */
@@ -75,11 +80,40 @@ public class FileSystem {
         return exists(parent.getPath() + "/" + name);
     }
 
-    public void writeContainer() {
-        // TODO
+    public void writeContainer() throws IOException {
+        SortedMap<Integer, FSFile> files = new TreeMap<>();
+        traverse(root, new FSAction() {
+            @Override
+            public void run(FileSystemObject obj) {
+                if(obj instanceof FSFile) {
+                    files.put(((FSFile) obj).startPosition, (FSFile) obj);
+                    // TODO: write directories
+                }
+            }
+        });
+        int totalSize = 0;
+        for(int key : files.keySet()) {
+            totalSize += files.get(key).getTotalSize();
+        }
+        byte[] output = new byte[totalSize];
+        for(int key : files.keySet()) {
+            int index = files.get(key).startPosition;
+            System.arraycopy(FILE_START_MARKER, 0, output, index, FILE_START_MARKER.length);
+            index += FILE_START_MARKER.length;
+            System.arraycopy(ByteBuffer.allocate(4).putInt(files.get(key).data.length).array(), 0, output, index, 4);
+            index += 4;
+            System.arraycopy(FILE_SIZE_MARKER, 0, output, index, FILE_SIZE_MARKER.length);
+            index += FILE_SIZE_MARKER.length;
+            System.arraycopy(files.get(key).data, 0, output, index, files.get(key).data.length);
+            index += files.get(key).data.length;
+            System.arraycopy(FILE_END_MARKER, 0, output, index, FILE_END_MARKER.length);
+            index += FILE_END_MARKER.length;
+        }
+        Files.write(container.toPath(), output);
     }
 
-    public void readContainer() {
+    public void readContainer() throws IOException {
+        byte[] input = Files.readAllBytes(container.toPath());
         // TODO
     }
 
@@ -144,5 +178,35 @@ public class FileSystem {
         StringBuilder sb = new StringBuilder();
         getTreeAsString(root, 0, 0, sb, utf8);
         System.out.println(sb);
+    }
+
+    public int findIndexFor(FSFile file) {
+        int totalSize = file.getTotalSize();
+        SortedMap<Integer, FSFile> files = new TreeMap<>();
+        traverse(root, new FSAction() {
+            @Override
+            public void run(FileSystemObject obj) {
+                if(obj instanceof FSFile) {
+                    FSFile f = (FSFile) obj;
+                    if(f.startPosition == -1) return;
+                    files.put(f.startPosition, f);
+                }
+            }
+        });
+        int prevEnd = 0;
+        for(int key : files.keySet()) {
+            if(files.get(key).writing) {
+                prevEnd = key;
+                continue;
+            }
+            if(key - prevEnd >= totalSize) {
+                return prevEnd;
+            }
+        }
+        totalSize = 0;
+        for(int key : files.keySet()) {
+            if(!files.get(key).writing) totalSize += files.get(key).getTotalSize();
+        }
+        return totalSize;
     }
 }
