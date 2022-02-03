@@ -6,6 +6,10 @@ import java.util.TreeSet;
 public class FSDirectory extends FileSystemObject {
     public SortedSet<FileSystemObject> children = new TreeSet<>();
 
+    public FSDirectory(FSDirectory parent, String name) {
+        super(parent, name);
+    }
+
     public FSDirectory(String name) {
         super(name);
     }

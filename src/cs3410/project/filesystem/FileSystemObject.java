@@ -1,11 +1,16 @@
 package cs3410.project.filesystem;
 
 public abstract class FileSystemObject implements Comparable<FileSystemObject> {
-    public FileSystemObject parent;
+    public FSDirectory parent;
     public String name;
 
-    public FileSystemObject(String name) {
+    public FileSystemObject(FSDirectory parent, String name) {
+        this.parent = parent;
         this.name = name;
+    }
+
+    public FileSystemObject(String name) {
+        this(Main.fs.root, name);
     }
 
     public String getPath() {

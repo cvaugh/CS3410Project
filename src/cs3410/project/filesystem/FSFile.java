@@ -5,6 +5,10 @@ public class FSFile extends FileSystemObject {
     private long size;
     private byte[] content;
 
+    public FSFile(FSDirectory parent, String name) {
+        super(parent, name);
+    }
+
     public FSFile(String name) {
         super(name);
     }
