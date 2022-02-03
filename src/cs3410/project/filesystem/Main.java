@@ -46,10 +46,12 @@ public class Main {
                 fs.readContainer();
             } else {
                 fs.container.createNewFile();
+                fs.mftContainer.createNewFile();
             }
         } catch(IOException e) {
             e.printStackTrace();
         }
+        fs.getTreeAsString(fs.root, true);
         if(toCopy != null) {
             if(toCopyDestination.isEmpty()) {
                 toCopyDestination = "/" + toCopy.getName();
@@ -59,12 +61,13 @@ public class Main {
             FSDirectory parent = fs.createParents(fs.root, toCopyDestination);
             if(fs.exists(toCopyDestination)) {
                 System.err.println("File already exists at destination: " + toCopyDestination);
-            }
-            FSFile target = fs.newFile(parent, targetName);
-            try {
-                target.write(Files.readAllBytes(toCopy.toPath()));
-            } catch(IOException e) {
-                e.printStackTrace();
+            } else {
+                FSFile target = fs.newFile(parent, targetName);
+                try {
+                    target.write(Files.readAllBytes(toCopy.toPath()));
+                } catch(IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
         fs.getTreeAsString(fs.root, true);

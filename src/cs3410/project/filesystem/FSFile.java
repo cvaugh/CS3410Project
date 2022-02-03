@@ -34,7 +34,6 @@ public class FSFile extends FileSystemObject {
     }
 
     public int getTotalSize() {
-        return (data == null ? 0 : data.length) + 4 + FileSystem.FILE_START_MARKER.length
-                + FileSystem.FILE_SIZE_MARKER.length + FileSystem.FILE_END_MARKER.length;
+        return (data == null ? 0 : data.length) + 4;
     }
 }
