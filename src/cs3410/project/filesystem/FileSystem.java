@@ -144,9 +144,7 @@ public class FileSystem {
             } else {
                 FSFile file = newFile(parent, name);
                 int startIndex = Utils.bytesToInt(Arrays.copyOfRange(segment, 1, 5));
-                System.out.println(startIndex);
                 int size = Utils.bytesToInt(Arrays.copyOfRange(data, startIndex, startIndex + 4));
-                System.out.println(size);
                 if(size > 0) {
                     file.write(Arrays.copyOfRange(data, startIndex + 4, startIndex + size));
                 } else {
