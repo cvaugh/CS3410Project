@@ -10,6 +10,9 @@ public class Main {
     public static void main(String[] args) {
         File toCopy = null;
         String toCopyDestination = "";
+        String toExtract = "";
+        String toExtractDestination = "";
+        boolean forceExtract = false;
         if(args.length > 0) {
             // Parse command line arguments
             try {
@@ -29,6 +32,18 @@ public class Main {
                     // Set the internal destination path of the external file
                     if(args[i].equals("-d")) {
                         toCopyDestination = args[i + 1];
+                    }
+                    // Extract an internal file to the external file system
+                    if(args[i].equals("-C")) {
+                        toExtract = args[i + 1];
+                    }
+                    // Set the external destination path of the internal file
+                    if(args[i].equals("-D")) {
+                        toExtractDestination = args[i + 1];
+                    }
+                    // Extract file even if the destination file already exists
+                    if(args[i].equals("-f")) {
+                        forceExtract = true;
                     }
                 }
             } catch(ArrayIndexOutOfBoundsException e) {
@@ -51,7 +66,6 @@ public class Main {
         } catch(IOException e) {
             e.printStackTrace();
         }
-        fs.getTreeAsString(fs.root, true);
         if(toCopy != null) {
             if(toCopyDestination.isEmpty()) {
                 toCopyDestination = "/" + toCopy.getName();
@@ -65,6 +79,29 @@ public class Main {
                 FSFile target = fs.newFile(parent, targetName);
                 try {
                     target.write(Files.readAllBytes(toCopy.toPath()));
+                } catch(IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        if(!toExtract.isEmpty()) {
+            FileSystemObject file = fs.getObject(toExtract);
+            if(file == null) {
+                throw new RuntimeException("File does not exist: " + toExtract);
+            }
+            if(file instanceof FSDirectory) {
+                // TODO
+                throw new RuntimeException("Unimplemented");
+            }
+            File out = new File(toExtractDestination);
+            if(out.exists() && !forceExtract) {
+                System.err.println(
+                        "File already exists: " + out.getAbsolutePath() + "\nRun again with -f argument to overwrite");
+            } else if(out.exists() && out.isDirectory()) {
+                System.err.println("Destination is a directory: " + out.getAbsolutePath());
+            } else {
+                try {
+                    Files.write(out.toPath(), ((FSFile) file).data);
                 } catch(IOException e) {
                     e.printStackTrace();
                 }
