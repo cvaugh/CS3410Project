@@ -139,4 +139,8 @@ public class Main {
     // TODO: register shell extension handler for reading from/reading to file
     // system container using Windows file explorer
     public static native void registerShellExtensionHandler();
+
+    public static void setShellExtensionStatus(int status) {
+        System.out.println("Shell extension status: " + status);
+    }
 }
