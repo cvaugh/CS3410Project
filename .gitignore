@@ -12,3 +12,5 @@ hs_err_pid*
 .settings/
 *.fs
 *.mft
+*.o
+*.dll

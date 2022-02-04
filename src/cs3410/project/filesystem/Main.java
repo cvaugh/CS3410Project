@@ -5,6 +5,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 public class Main {
+    static {
+        System.loadLibrary("native");
+    }
+
     public static FileSystem fs;
 
     public static void main(String[] args) {
@@ -13,6 +17,8 @@ public class Main {
         String toExtract = "";
         String toExtractDestination = "";
         boolean forceExtract = false;
+        boolean registerShellExtension = false;
+        boolean deregisterShellExtension = false;
         if(args.length > 0) {
             // Parse command line arguments
             try {
@@ -44,6 +50,14 @@ public class Main {
                     // Extract file even if the destination file already exists
                     if(args[i].equals("-f")) {
                         forceExtract = true;
+                    }
+                    // Register a Windows shell extension associated with the application
+                    if(args[i].equals("-r")) {
+                        registerShellExtension = true;
+                    }
+                    // Deregister the Windows shell extension associated with the application
+                    if(args[i].equals("-R")) {
+                        deregisterShellExtension = true;
                     }
                 }
             } catch(ArrayIndexOutOfBoundsException e) {
@@ -96,7 +110,7 @@ public class Main {
             File out = new File(toExtractDestination);
             if(out.exists() && !forceExtract) {
                 System.err.println(
-                        "File already exists: " + out.getAbsolutePath() + "\nRun again with -f argument to overwrite");
+                        "File already exists: " + out.getAbsolutePath() + "\nRun again with the -f flag to overwrite");
             } else if(out.exists() && out.isDirectory()) {
                 System.err.println("Destination is a directory: " + out.getAbsolutePath());
             } else {
@@ -107,7 +121,13 @@ public class Main {
                 }
             }
         }
-        fs.getTreeAsString(fs.root, true);
+        if(registerShellExtension && deregisterShellExtension) {
+            System.err.println("The -r and -R flags may not be used at the same time");
+            System.exit(1);
+        }
+        if(registerShellExtension) {
+            registerShellExtensionHandler();
+        }
 
         try {
             fs.writeContainer();
@@ -118,5 +138,5 @@ public class Main {
 
     // TODO: register shell extension handler for reading from/reading to file
     // system container using Windows file explorer
-    // public static native void registerShellExtensionHandler();
+    public static native void registerShellExtensionHandler();
 }
