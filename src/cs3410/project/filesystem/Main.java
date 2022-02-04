@@ -8,6 +8,9 @@ public class Main {
     static {
         System.loadLibrary("native");
     }
+    private static final int SHELL_EXTENSION_REGISTERED = 0;
+    private static final int SHELL_EXTENSION_ALREADY_REGISTERED = 1;
+    private static final int SHELL_EXTENSION_DEREGISTERED = 2;
 
     public static FileSystem fs;
 
@@ -141,6 +144,26 @@ public class Main {
     public static native void registerShellExtensionHandler();
 
     public static void setShellExtensionStatus(int status) {
-        System.out.println("Shell extension status: " + status);
+        switch(status) {
+        case SHELL_EXTENSION_REGISTERED: {
+            System.out.println("Shell extension registered");
+            break;
+        }
+        case SHELL_EXTENSION_ALREADY_REGISTERED: {
+            System.err.println(
+                    "The shell extension has already been registered\nUse the -R flag to deregister the shell extension");
+            System.exit(1);
+            break;
+        }
+        case SHELL_EXTENSION_DEREGISTERED: {
+            System.out.println("Shell extension deregistered");
+            break;
+        }
+        default:
+            System.err.println("Unexpected shell extension status: " + status);
+            System.exit(1);
+            break;
+        }
+        System.exit(0);
     }
 }
