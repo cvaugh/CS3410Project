@@ -5,13 +5,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 public class Main {
-    static {
-        System.loadLibrary("native");
-    }
-    private static final int SHELL_EXTENSION_REGISTERED = 0;
-    private static final int SHELL_EXTENSION_ALREADY_REGISTERED = 1;
-    private static final int SHELL_EXTENSION_DEREGISTERED = 2;
-
     public static FileSystem fs;
 
     public static void main(String[] args) {
@@ -20,8 +13,6 @@ public class Main {
         String toExtract = "";
         String toExtractDestination = "";
         boolean forceExtract = false;
-        boolean registerShellExtension = false;
-        boolean deregisterShellExtension = false;
         if(args.length > 0) {
             // Parse command line arguments
             try {
@@ -53,14 +44,6 @@ public class Main {
                     // Extract file even if the destination file already exists
                     if(args[i].equals("-f")) {
                         forceExtract = true;
-                    }
-                    // Register a Windows shell extension associated with the application
-                    if(args[i].equals("-r")) {
-                        registerShellExtension = true;
-                    }
-                    // Deregister the Windows shell extension associated with the application
-                    if(args[i].equals("-R")) {
-                        deregisterShellExtension = true;
                     }
                 }
             } catch(ArrayIndexOutOfBoundsException e) {
@@ -124,46 +107,11 @@ public class Main {
                 }
             }
         }
-        if(registerShellExtension && deregisterShellExtension) {
-            System.err.println("The -r and -R flags may not be used at the same time");
-            System.exit(1);
-        }
-        if(registerShellExtension) {
-            registerShellExtensionHandler();
-        }
 
         try {
             fs.writeContainer();
         } catch(IOException e) {
             e.printStackTrace();
         }
-    }
-
-    // TODO: register shell extension handler for reading from/reading to file
-    // system container using Windows file explorer
-    public static native void registerShellExtensionHandler();
-
-    public static void setShellExtensionStatus(int status) {
-        switch(status) {
-        case SHELL_EXTENSION_REGISTERED: {
-            System.out.println("Shell extension registered");
-            break;
-        }
-        case SHELL_EXTENSION_ALREADY_REGISTERED: {
-            System.err.println(
-                    "The shell extension has already been registered\nUse the -R flag to deregister the shell extension");
-            System.exit(1);
-            break;
-        }
-        case SHELL_EXTENSION_DEREGISTERED: {
-            System.out.println("Shell extension deregistered");
-            break;
-        }
-        default:
-            System.err.println("Unexpected shell extension status: " + status);
-            System.exit(1);
-            break;
-        }
-        System.exit(0);
     }
 }
