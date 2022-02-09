@@ -14,7 +14,13 @@ public class FileSystem {
     /** Signifies the end of a file */
     public static final byte[] FILE_END_MARKER = new byte[] { (byte) 0xDE, (byte) 0xAD, (byte) 0xFE, (byte) 0xED };
     public final FSDirectory root = new FSDirectory(null, "");
+    /**
+     * This file stores the contents of the files contained within the file system
+     */
     public File container;
+    /**
+     * This file stores the structure of the file system
+     */
     public File mftContainer;
 
     public FileSystem(File container) {
@@ -22,6 +28,9 @@ public class FileSystem {
         this.mftContainer = new File(container.getParentFile(), container.getName() + ".mft");
     }
 
+    /**
+     * Performs an action on all of the descendants of <tt>root</tt>.
+     */
     public void traverse(FSDirectory root, FSAction action) {
         action.run(root);
         for(FileSystemObject obj : root.children) {
@@ -33,6 +42,11 @@ public class FileSystem {
         }
     }
 
+    /**
+     * @param parent The parent directory of the new file
+     * @param name The name of the new file
+     * @return The <tt>FSFile</tt> if it was created successfully, otherwise <tt>null</tt>
+     */
     public FSFile newFile(FSDirectory parent, String name) {
         if(name.isEmpty()) return null;
         if(exists(parent, name)) return null;
@@ -42,6 +56,11 @@ public class FileSystem {
         return file;
     }
 
+    /**
+     * @param parent The parent directory of the new directory
+     * @param name The name of the new directory
+     * @return The <tt>FSDirectory</tt> if it was created successfully, otherwise <tt>null</tt>
+     */
     public FSDirectory newDirectory(FSDirectory parent, String name) {
         if(name.isEmpty()) return null;
         if(exists(parent, name)) return null;
@@ -51,6 +70,15 @@ public class FileSystem {
         return dir;
     }
 
+    /**
+     * Recursively creates the ancestors of an object at a given path.
+     * 
+     * @param root 
+     * @param path The path, relative to <tt>root</tt>, to the file whose ancestors
+     *             should be created
+     * @return The immediate parent of the object at <tt>path</tt>
+     * @throws RuntimeException If one of the parents already exists and is not a directory.
+     */
     public FSDirectory createParents(FSDirectory root, String path) {
         if(path.charAt(0) == '/') {
             root = this.root;
@@ -73,14 +101,49 @@ public class FileSystem {
         return createParents((FSDirectory) child, splitPath[1]);
     }
 
+    /**
+     * @return Whether an object exists at the given path
+     */
     public boolean exists(String path) {
         return getObject(path) != null;
     }
 
+    /**
+     * @return If <tt>parent</tt> has a child with the given name
+     */
     public boolean exists(FSDirectory parent, String name) {
         return exists(parent.getPath() + "/" + name);
     }
 
+    /**
+     * Writes the file system to the container file on the disk.
+     * <br><br>
+     * Each file consists of four bytes containing the size of the file's contents,
+     * in bytes, followed by the contents. For example, a file consisting of only
+     * the text "test 123" would be written as follows:
+     * <pre>
+     * 00 00 00 08 74 65 73 74 20 31 32 33
+     * ^---------^ ^---------------------^
+     *    size             content
+     * </pre>
+     * The structure of the file system is written to a separate file. The location
+     * of each object in the file system is represented by the object's absolute path
+     * preceded by a single byte to determine if the object is a <tt>FSFile</tt> or
+     * <tt>FSDirectory</tt> (<tt>0x46</tt> for files and <tt>0x44</tt> for directories)
+     * and, if the object is a <tt>FSFile</tt>, the starting index of the object within
+     * the container file. Each entry is separated by the <tt>FILE_END_MARKER</tt>.
+     * <br><br>
+     * For example, a <tt>FSFile</tt> with the name "file.txt" and starting index 100
+     * that is an immediate child of file system's root would be written as follows:
+     * <pre>
+     * 46 64 2F 74 65 73 74 2E 74 78 74 DE AD FE ED
+     * ^  ^  ^------------------------^ ^---------^
+     * F  |            path            FILE_END_MARKER
+     *    index
+     * </pre>
+     * @see #readContainer()
+     * @throws IOException
+     */
     public void writeContainer() throws IOException {
         SortedMap<Integer, FSFile> files = new TreeMap<>();
         traverse(root, new FSAction() {
@@ -129,6 +192,11 @@ public class FileSystem {
         Files.write(mftContainer.toPath(), mft.toByteArray());
     }
 
+    /**
+     * Reads the container file from the disk.
+     * @see #writeContainer()
+     * @throws IOException
+     */
     public void readContainer() throws IOException {
         byte[] data = Files.readAllBytes(container.toPath());
         byte[] mft = Files.readAllBytes(mftContainer.toPath());
@@ -154,12 +222,23 @@ public class FileSystem {
         }
     }
 
+    /**
+     * @param path The path of the object to get the parent of
+     * @return The parent <tt>FSDirectory</tt> of the object at the specified path,
+     *         or <tt>null</tt> if the path is empty or relative
+     */
     public FSDirectory getParent(String path) {
         if(path.isEmpty() || !path.contains("/")) return null;
         if(path.indexOf('/') == path.lastIndexOf('/')) return root;
         return (FSDirectory) getObject(path.substring(0, path.lastIndexOf('/')));
     }
 
+    /**
+     * @param parent The root of the subtree to search for the object
+     * @param path The path to an object
+     * @return The <tt>FileSystemObject</tt> at the specified path if it exists, otherwise <tt>null</tt>
+     * @see #getObject(String)
+     */
     public FileSystemObject getObject(FSDirectory parent, String path) {
         if(path.charAt(0) == '/') {
             parent = root;
@@ -179,6 +258,11 @@ public class FileSystem {
         }
     }
 
+    /**
+     * @param path The path to an object
+     * @return The <tt>FileSystemObject</tt> at the specified path if it exists, otherwise <tt>null</tt>.
+     * @see #getObject(FSDirectory, String)
+     */
     public FileSystemObject getObject(String path) {
         return getObject(root, path);
     }
@@ -217,12 +301,22 @@ public class FileSystem {
         }
     }
 
+    /**
+     * @param root The <tt>FSDirectory</tt> from which to start the traversal
+     * @param utf8 If true, the tree is printed using box drawing characters.
+     *             Otherwise, ASCII characters (<tt>|+-</tt>) are used.
+     */
     public void getTreeAsString(FSDirectory root, boolean utf8) {
         StringBuilder sb = new StringBuilder();
         getTreeAsString(root, 0, 0, sb, utf8);
         System.out.println(sb);
     }
 
+    /**
+     * @param file The file for which to find a suitable index
+     * @return The starting index of the first instance of empty space within the
+     *         container that is large enough to hold the contents of <tt>file</tt>
+     */
     public int findIndexFor(FSFile file) {
         int totalSize = file.getTotalSize();
         SortedMap<Integer, FSFile> files = new TreeMap<>();

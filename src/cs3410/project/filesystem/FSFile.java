@@ -28,11 +28,20 @@ public class FSFile extends FileSystemObject {
         // TODO only read files as needed, rather than keeping everything in memory
     }
 
+    /**
+     * Marks the file for deletion.
+     * <br>
+     * After this method is called, the file will not be saved when
+     * {@link FileSystem#writeContainer()} is called and its contents are nullified.
+     */
     public void delete() {
         startPosition = -1;
         Arrays.fill(data, (byte) 0);
     }
 
+    /**
+     * @return The actual size of this file on the disk.
+     */
     public int getTotalSize() {
         return (data == null ? 0 : data.length) + 4;
     }

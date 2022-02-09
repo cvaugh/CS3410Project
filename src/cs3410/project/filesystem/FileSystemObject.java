@@ -13,6 +13,9 @@ public abstract class FileSystemObject implements Comparable<FileSystemObject> {
         this(Main.fs.root, name);
     }
 
+    /**
+     * @return The absolute path of this <tt>FileSystemObject</tt>.
+     */
     public String getPath() {
         if(this.isRoot()) return "";
         StringBuilder sb = new StringBuilder();
@@ -22,10 +25,16 @@ public abstract class FileSystemObject implements Comparable<FileSystemObject> {
         return sb.toString();
     }
 
+    /**
+     * @return Whether this object is orphaned from the file system.
+     */
     public boolean isOrphan() {
         return parent == null || Main.fs.exists(this.getPath());
     }
 
+    /**
+     * @return Whether this object is the file system's root directory.
+     */
     public boolean isRoot() {
         return this.equals(Main.fs.root);
     }

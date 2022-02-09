@@ -14,6 +14,10 @@ public class FSDirectory extends FileSystemObject {
         super(name);
     }
 
+    /**
+     * @return The child of the directory with the given name if it exists,
+     *         otherwise <tt>null</tt>
+     */
     public FileSystemObject getChild(String name) {
         for(FileSystemObject child : children) {
             if(child.name.equals(name)) {
