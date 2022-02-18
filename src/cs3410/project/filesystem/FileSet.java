@@ -30,6 +30,10 @@ public class FileSet implements Collection<FileSystemObject> {
         return Arrays.stream(objects).iterator();
     }
 
+    public FileSystemObject get(int index) {
+        return objects[index];
+    }
+
     @Override
     public Object[] toArray() {
         return objects;
@@ -179,7 +183,7 @@ public class FileSet implements Collection<FileSystemObject> {
         int k = 0;
 
         while(i <= mid && j <= right) {
-            if(array[i].compareTo(array[j]) < 0) {
+            if(array[i].name.compareTo(array[j].name) < 0) {
                 temp[k] = array[i];
                 i++;
             } else {
