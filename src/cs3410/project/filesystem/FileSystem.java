@@ -6,13 +6,10 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.Arrays;
-import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 public class FileSystem {
-    /** Signifies the end of a file */
-    public static final byte[] FILE_END_MARKER = new byte[] { (byte) 0xDE, (byte) 0xAD, (byte) 0xFE, (byte) 0xED };
     public final FSDirectory root = new FSDirectory(null, "");
     /**
      * This file stores the contents of the files contained within the file system
@@ -131,15 +128,15 @@ public class FileSystem {
      * preceded by a single byte to determine if the object is a <tt>FSFile</tt> or
      * <tt>FSDirectory</tt> (<tt>0x46</tt> for files and <tt>0x44</tt> for directories)
      * and, if the object is a <tt>FSFile</tt>, the starting index of the object within
-     * the container file. Each entry is separated by the <tt>FILE_END_MARKER</tt>.
+     * the container file. Following the index is the length of the object's path, in
+     * bytes.
      * <br><br>
      * For example, a <tt>FSFile</tt> with the name "file.txt" and starting index 100
      * that is an immediate child of file system's root would be written as follows:
      * <pre>
-     * 46 64 2F 74 65 73 74 2E 74 78 74 DE AD FE ED
-     * ^  ^  ^------------------------^ ^---------^
-     * F  |            path            FILE_END_MARKER
-     *    index
+     * 46 00 00 00 64 00 00 00 09 2F 74 65 73 74 2E 74 78 74
+     * ^  ^---------^ ^---------^ ^------------------------^
+     * F     index     path size             path
      * </pre>
      * @see #readContainer()
      * @throws IOException
@@ -161,9 +158,7 @@ public class FileSystem {
         byte[] output = new byte[totalSize];
         for(int key : files.keySet()) {
             int index = files.get(key).startPosition;
-            System.arraycopy(
-                    ByteBuffer.allocate(4).putInt(files.get(key).data == null ? 0 : files.get(key).data.length).array(),
-                    0, output, index, 4);
+            System.arraycopy(ByteBuffer.allocate(4).putInt(files.get(key).getTotalSize()).array(), 0, output, index, 4);
             index += 4;
             if(files.get(key).data != null) {
                 System.arraycopy(files.get(key).data, 0, output, index, files.get(key).data.length);
@@ -182,8 +177,8 @@ public class FileSystem {
                     if(obj instanceof FSFile) {
                         mft.write(ByteBuffer.allocate(4).putInt(((FSFile) obj).startPosition).array());
                     }
+                    mft.write(ByteBuffer.allocate(4).putInt(obj.getPath().length()).array());
                     mft.write(obj.getPath().getBytes());
-                    mft.write(FILE_END_MARKER);
                 } catch(IOException e) {
                     e.printStackTrace();
                 }
@@ -200,18 +195,23 @@ public class FileSystem {
     public void readContainer() throws IOException {
         byte[] data = Files.readAllBytes(container.toPath());
         byte[] mft = Files.readAllBytes(mftContainer.toPath());
-        List<byte[]> mftSplit = Utils.splitByteArray(mft, FILE_END_MARKER);
-        for(byte[] segment : mftSplit) {
-            if(segment.length == 0) continue;
-            boolean isDirectory = segment[0] == (byte) 0x44;
-            String path = new String(Arrays.copyOfRange(segment, isDirectory ? 1 : 5, segment.length));
+        for(int i = 0; i < mft.length; i++) {
+            boolean isDirectory = mft[i] == (byte) 0x44;
+            i++;
+            int startIndex = 0;
+            if(!isDirectory) {
+                startIndex = Utils.bytesToInt(Arrays.copyOfRange(mft, i, i + 4));
+                i += 4;
+            }
+            int pathSize = Utils.bytesToInt(Arrays.copyOfRange(mft, i, i + 4));
+            i += 4;
+            String path = new String(Arrays.copyOfRange(mft, i, i + pathSize));
             FSDirectory parent = getParent(path);
             String name = path.substring(path.lastIndexOf('/') + 1, path.length());
             if(isDirectory) {
                 newDirectory(parent, name);
             } else {
                 FSFile file = newFile(parent, name);
-                int startIndex = Utils.bytesToInt(Arrays.copyOfRange(segment, 1, 5));
                 int size = Utils.bytesToInt(Arrays.copyOfRange(data, startIndex, startIndex + 4));
                 if(size > 0) {
                     file.write(Arrays.copyOfRange(data, startIndex + 4, startIndex + size));
@@ -219,6 +219,7 @@ public class FileSystem {
                     file.write(new byte[0]);
                 }
             }
+            i += pathSize - 1;
         }
     }
 

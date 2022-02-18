@@ -47,4 +47,6 @@ public abstract class FileSystemObject implements Comparable<FileSystemObject> {
     public String toString() {
         return this.isRoot() ? "/" : getPath();
     }
+
+    public abstract int getSize();
 }

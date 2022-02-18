@@ -23,4 +23,13 @@ public class FSDirectory extends FileSystemObject {
         }
         return null;
     }
+
+    @Override
+    public int getSize() {
+        int sum = 0;
+        for(FileSystemObject child : children) {
+            sum += child.getSize();
+        }
+        return sum;
+    }
 }

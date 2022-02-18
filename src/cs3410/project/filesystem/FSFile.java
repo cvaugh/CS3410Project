@@ -42,6 +42,7 @@ public class FSFile extends FileSystemObject {
     /**
      * @return The size of the file's content.
      */
+    @Override
     public int getSize() {
         return data == null ? 0 : data.length;
     }
