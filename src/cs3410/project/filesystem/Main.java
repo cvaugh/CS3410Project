@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import cs3410.project.filesystem.browser.BrowserFrame;
+
 public class Main {
     public static FileSystem fs;
 
@@ -13,6 +15,7 @@ public class Main {
         String toExtract = "";
         String toExtractDestination = "";
         boolean forceExtract = false;
+        boolean browser = false;
         if(args.length > 0) {
             // Parse command line arguments
             try {
@@ -44,6 +47,10 @@ public class Main {
                     // Extract file even if the destination file already exists
                     if(args[i].equals("-f")) {
                         forceExtract = true;
+                    }
+                    // Open a file browser GUI
+                    if(args[i].equals("-b")) {
+                        browser = true;
                     }
                 }
             } catch(ArrayIndexOutOfBoundsException e) {
@@ -107,11 +114,15 @@ public class Main {
                 }
             }
         }
-
-        try {
-            fs.writeContainer();
-        } catch(IOException e) {
-            e.printStackTrace();
+        if(browser) {
+            BrowserFrame browserFrame = new BrowserFrame();
+            browserFrame.setVisible(true);
+        } else {
+            try {
+                fs.writeContainer();
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

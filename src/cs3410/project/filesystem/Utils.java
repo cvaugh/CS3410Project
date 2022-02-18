@@ -1,10 +1,13 @@
 package cs3410.project.filesystem;
 
+import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
 public class Utils {
+    private static final DecimalFormat SIZE_FORMAT = new DecimalFormat("#.00");
+
     /**
      * @return True if <tt>a</tt> contains the subarray <tt>b</tt> starting at
      *         <tt>startIndex</tt>, otherwise false.
@@ -58,5 +61,19 @@ public class Utils {
             i = (i << 8) + (b & 0xFF);
         }
         return i;
+    }
+
+    public static String humanReadableSize(int bytes) {
+        double b = (double) bytes;
+        int magnitude = 0;
+        while(b > 1000) {
+            b /= 1000;
+            magnitude++;
+        }
+        if(magnitude == 0) {
+            return b + " B";
+        } else {
+            return String.format("%s %sB", SIZE_FORMAT.format(b), "kMGTPEZY".charAt(magnitude - 1));
+        }
     }
 }

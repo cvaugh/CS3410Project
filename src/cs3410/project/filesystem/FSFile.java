@@ -40,9 +40,16 @@ public class FSFile extends FileSystemObject {
     }
 
     /**
+     * @return The size of the file's content.
+     */
+    public int getSize() {
+        return data == null ? 0 : data.length;
+    }
+
+    /**
      * @return The actual size of this file on the disk.
      */
     public int getTotalSize() {
-        return (data == null ? 0 : data.length) + 4;
+        return getSize() + 4;
     }
 }
