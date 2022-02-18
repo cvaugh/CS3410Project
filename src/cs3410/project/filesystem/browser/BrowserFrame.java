@@ -1,6 +1,7 @@
 package cs3410.project.filesystem.browser;
 
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -49,7 +50,12 @@ public class BrowserFrame extends JFrame {
                 if(e.getButton() == MouseEvent.BUTTON3) {
                     // TODO context menu
                 } else if(e.getClickCount() == 2) {
-                    FileSystemObject obj = currentRoot.children.get(table.rowAtPoint(e.getPoint()));
+                    int row = table.rowAtPoint(e.getPoint());
+                    if(row == 0 && !currentRoot.isRoot()) {
+                        update(currentRoot.parent);
+                        return;
+                    }
+                    FileSystemObject obj = currentRoot.children.get(row - (currentRoot.isRoot() ? 0 : 1));
                     if(obj instanceof FSDirectory) {
                         update((FSDirectory) obj);
                     } else {
@@ -58,11 +64,13 @@ public class BrowserFrame extends JFrame {
                 }
             }
         });
+        table.setFont(new Font(table.getFont().getName(), Font.PLAIN, 14));
         scrollPane.setPreferredSize(new Dimension(800, 800));
         scrollPane.setViewportView(table);
         add(scrollPane);
         pack();
         update(Main.fs.root);
+        table.setRowHeight(table.getRowHeight() + 4);
     }
 
     private void update(FSDirectory root) {
@@ -71,7 +79,7 @@ public class BrowserFrame extends JFrame {
         table.setModel(new AbstractTableModel() {
             @Override
             public int getRowCount() {
-                return root.children.size();
+                return root.children.size() + (root.isRoot() ? 0 : 1);
             }
 
             @Override
@@ -81,16 +89,29 @@ public class BrowserFrame extends JFrame {
 
             @Override
             public Object getValueAt(int rowIndex, int columnIndex) {
-                FileSystemObject obj = root.children.get(rowIndex);
-                switch(columnIndex) {
-                case 0:
-                    return obj.name;
-                case 1:
-                    return obj instanceof FSFile ? "File" : "Directory";
-                case 2:
-                    return obj instanceof FSFile ? Utils.humanReadableSize(((FSFile) obj).getSize()) : "";
-                default:
-                    return "";
+                if(rowIndex == 0 && !root.isRoot()) {
+                    switch(columnIndex) {
+                    case 0:
+                        return "\u2B8D Parent Directory";
+                    case 1:
+                        return "Directory";
+                    case 2:
+                        return "";
+                    default:
+                        return "";
+                    }
+                } else {
+                    FileSystemObject obj = root.children.get(rowIndex - (root.isRoot() ? 0 : 1));
+                    switch(columnIndex) {
+                    case 0:
+                        return obj.name;
+                    case 1:
+                        return obj instanceof FSFile ? "File" : "Directory";
+                    case 2:
+                        return Utils.humanReadableSize(obj.getSize());
+                    default:
+                        return "";
+                    }
                 }
             }
         });
