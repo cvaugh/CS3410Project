@@ -1,10 +1,7 @@
 package cs3410.project.filesystem;
 
-import java.util.SortedSet;
-import java.util.TreeSet;
-
 public class FSDirectory extends FileSystemObject {
-    public SortedSet<FileSystemObject> children = new TreeSet<>();
+    public FileSet children = new FileSet();
 
     public FSDirectory(FSDirectory parent, String name) {
         super(parent, name);
