@@ -18,6 +18,7 @@ public class Main {
         boolean browser = false;
         if(args.length > 0) {
             // Parse command line arguments
+            // TODO parse arguments in a more standard way
             try {
                 for(int i = 0; i < args.length; i++) {
                     // Copy an external file into the file system
@@ -74,6 +75,9 @@ public class Main {
             e.printStackTrace();
         }
         if(toCopy != null) {
+            if(toCopyDestination.contains("%s")) {
+                toCopyDestination = String.format(toCopyDestination, toCopy.getName());
+            }
             if(toCopyDestination.isEmpty()) {
                 toCopyDestination = "/" + toCopy.getName();
             }
