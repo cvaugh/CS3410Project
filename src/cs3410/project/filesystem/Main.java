@@ -14,8 +14,7 @@ public class Main {
         String toCopyDestination = "";
         String toExtract = "";
         String toExtractDestination = "";
-        boolean forceExtract = false;
-        boolean browser = false;
+        boolean forceExtract = false, browser = false, printBeforeExit = false;
         if(args.length > 0) {
             // Parse command line arguments
             // TODO parse arguments in a more standard way
@@ -52,6 +51,10 @@ public class Main {
                     // Open a file browser GUI
                     if(args[i].equals("-b")) {
                         browser = true;
+                    }
+                    // Print the file system before exiting
+                    if(args[i].equals("-p")) {
+                        printBeforeExit = true;
                     }
                 }
             } catch(ArrayIndexOutOfBoundsException e) {
@@ -127,6 +130,9 @@ public class Main {
             } catch(IOException e) {
                 e.printStackTrace();
             }
+        }
+        if(printBeforeExit) {
+            fs.getTreeAsString(fs.root, true);
         }
     }
 }

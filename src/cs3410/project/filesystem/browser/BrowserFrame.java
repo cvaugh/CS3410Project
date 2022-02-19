@@ -6,7 +6,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
@@ -105,8 +107,45 @@ public class BrowserFrame extends JFrame {
                     switch(columnIndex) {
                     case 0:
                         return obj.name;
-                    case 1:
-                        return obj instanceof FSFile ? "File" : "Directory";
+                    case 1: {
+                        if(obj instanceof FSFile) {
+                            if(!obj.name.contains(".")) return "File";
+                            String extension = obj.name.substring(obj.name.lastIndexOf('.', obj.name.length()));
+                            try {
+                                Process proc0 = Runtime.getRuntime().exec(
+                                        "reg query HKEY_CURRENT_USER\\SOFTWARE\\Classes\\" + extension + " /v \"\"");
+                                BufferedReader stdin0 = new BufferedReader(
+                                        new InputStreamReader(proc0.getInputStream()));
+                                String s = null, association = "";
+                                while((s = stdin0.readLine()) != null) {
+                                    if(s.contains("(Default)")) {
+                                        association = s;
+                                    }
+                                }
+                                stdin0.close();
+                                if(association.isEmpty()) return "File";
+                                association = association.substring(association.indexOf("REG_SZ") + 6).trim();
+                                Process proc1 = Runtime.getRuntime().exec(
+                                        "reg query HKEY_LOCAL_MACHINE\\SOFTWARE\\Classes\\" + association + " /v \"\"");
+                                BufferedReader stdin1 = new BufferedReader(
+                                        new InputStreamReader(proc1.getInputStream()));
+                                s = null;
+                                String description = "";
+                                while((s = stdin1.readLine()) != null) {
+                                    if(s.contains("(Default)")) {
+                                        description = s;
+                                    }
+                                }
+                                stdin1.close();
+                                if(description.isEmpty()) return "File";
+                                return description.substring(description.indexOf("REG_SZ") + 6).trim();
+                            } catch(IOException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            return "Directory";
+                        }
+                    }
                     case 2:
                         return Utils.humanReadableSize(obj.getSize());
                     default:
@@ -118,8 +157,8 @@ public class BrowserFrame extends JFrame {
         table.getColumnModel().getColumn(0).setHeaderValue("Name");
         table.getColumnModel().getColumn(1).setHeaderValue("Type");
         table.getColumnModel().getColumn(2).setHeaderValue("Size");
-        table.getColumnModel().getColumn(0).setPreferredWidth(600);
-        table.getColumnModel().getColumn(1).setPreferredWidth(100);
+        table.getColumnModel().getColumn(0).setPreferredWidth(450);
+        table.getColumnModel().getColumn(1).setPreferredWidth(250);
         table.getColumnModel().getColumn(2).setPreferredWidth(100);
     }
 }
