@@ -28,6 +28,7 @@ public class BrowserFrame extends JFrame {
     private static final long serialVersionUID = -6275492324105494374L;
 
     private static final Map<String, String> DESCRIPTION_CACHE = new HashMap<>();
+    private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase().contains("win");
     private final JTable table = new JTable();
     private final JScrollPane scrollPane = new JScrollPane(table);
     public FSDirectory currentRoot;
@@ -61,7 +62,7 @@ public class BrowserFrame extends JFrame {
                         return;
                     }
                     FileSystemObject obj = currentRoot.children.get(row - (currentRoot.isRoot() ? 0 : 1));
-                    if(obj instanceof FSDirectory) {
+                    if(obj.isDirectory()) {
                         update((FSDirectory) obj);
                     } else {
                         // TODO open file
@@ -111,10 +112,10 @@ public class BrowserFrame extends JFrame {
                     case 0:
                         return obj.name;
                     case 1: {
-                        if(obj instanceof FSFile) {
-                            return getDescription((FSFile) obj);
-                        } else {
+                        if(obj.isDirectory()) {
                             return "Directory";
+                        } else {
+                            return getDescription((FSFile) obj);
                         }
                     }
                     case 2:
@@ -134,7 +135,8 @@ public class BrowserFrame extends JFrame {
     }
 
     private static String getDescription(FSFile file) {
-        if(!file.name.contains(".")) return "File";
+        if(!IS_WINDOWS || !file.name.contains(".")) return "File";
+        System.out.println();
         String extension = file.name.substring(file.name.lastIndexOf('.', file.name.length()));
         if(DESCRIPTION_CACHE.containsKey(extension)) return DESCRIPTION_CACHE.get(extension);
         try {

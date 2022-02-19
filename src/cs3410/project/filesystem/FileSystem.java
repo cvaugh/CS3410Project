@@ -31,7 +31,7 @@ public class FileSystem {
     public void traverse(FSDirectory root, FSAction action) {
         action.run(root);
         for(FileSystemObject obj : root.children) {
-            if(obj instanceof FSDirectory) {
+            if(obj.isDirectory()) {
                 traverse((FSDirectory) obj, action);
             } else {
                 action.run(obj);
@@ -91,7 +91,7 @@ public class FileSystem {
         } else {
             child = newDirectory(root, splitPath[0]);
         }
-        if(!(child instanceof FSDirectory)) {
+        if(!child.isDirectory()) {
             throw new RuntimeException(
                     "Error while recursively creating parents: '" + child.name + "' exists and is not a directory");
         }
@@ -146,7 +146,7 @@ public class FileSystem {
         traverse(root, new FSAction() {
             @Override
             public void run(FileSystemObject obj) {
-                if(obj instanceof FSFile) {
+                if(!obj.isDirectory()) {
                     files.put(((FSFile) obj).startPosition, (FSFile) obj);
                 }
             }
@@ -173,8 +173,8 @@ public class FileSystem {
             public void run(FileSystemObject obj) {
                 if(obj.isRoot()) return;
                 try {
-                    mft.write(obj instanceof FSFile ? (byte) 0x46 : (byte) 0x44);
-                    if(obj instanceof FSFile) {
+                    mft.write(obj.isDirectory() ? (byte) 0x44 : (byte) 0x46);
+                    if(!obj.isDirectory()) {
                         mft.write(ByteBuffer.allocate(4).putInt(((FSFile) obj).startPosition).array());
                     }
                     mft.write(ByteBuffer.allocate(4).putInt(obj.getPath().length()).array());
@@ -252,7 +252,7 @@ public class FileSystem {
         FileSystemObject obj = parent.getChild(splitPath[0]);
         if(obj == null) {
             return null;
-        } else if(obj instanceof FSDirectory) {
+        } else if(obj.isDirectory()) {
             return getObject((FSDirectory) obj, splitPath[1]);
         } else {
             return null;
@@ -284,7 +284,7 @@ public class FileSystem {
         sb.append("\n");
         index = 0;
         for(FileSystemObject obj : root.children) {
-            if(obj instanceof FSDirectory) {
+            if(obj.isDirectory()) {
                 getTreeAsString((FSDirectory) obj, depth + 1, index, sb, utf8);
             } else {
                 for(int i = 0; i < depth; i++) {
@@ -324,7 +324,7 @@ public class FileSystem {
         traverse(root, new FSAction() {
             @Override
             public void run(FileSystemObject obj) {
-                if(obj instanceof FSFile) {
+                if(!obj.isDirectory()) {
                     FSFile f = (FSFile) obj;
                     if(f.startPosition == -1) return;
                     files.put(f.startPosition, f);

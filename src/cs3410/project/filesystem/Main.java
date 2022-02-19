@@ -103,7 +103,7 @@ public class Main {
             if(file == null) {
                 throw new RuntimeException("File does not exist: " + toExtract);
             }
-            if(file instanceof FSDirectory) {
+            if(file.isDirectory()) {
                 // TODO
                 throw new RuntimeException("Unimplemented");
             }

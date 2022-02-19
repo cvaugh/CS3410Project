@@ -39,6 +39,13 @@ public abstract class FileSystemObject implements Comparable<FileSystemObject> {
         return this.equals(Main.fs.root);
     }
 
+    /**
+     * @return Whether this object is an instance of <tt>FSDirectory</tt>
+     */
+    public boolean isDirectory() {
+        return this instanceof FSDirectory;
+    }
+
     @Override
     public int compareTo(FileSystemObject obj) {
         return this.name.compareTo(obj.name);
@@ -48,5 +55,8 @@ public abstract class FileSystemObject implements Comparable<FileSystemObject> {
         return this.isRoot() ? "/" : getPath();
     }
 
+    /**
+     * @return The size of the file's content.
+     */
     public abstract int getSize();
 }
