@@ -9,6 +9,8 @@ import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
@@ -25,6 +27,7 @@ import cs3410.project.filesystem.Utils;
 public class BrowserFrame extends JFrame {
     private static final long serialVersionUID = -6275492324105494374L;
 
+    private static final Map<String, String> DESCRIPTION_CACHE = new HashMap<>();
     private final JTable table = new JTable();
     private final JScrollPane scrollPane = new JScrollPane(table);
     public FSDirectory currentRoot;
@@ -109,39 +112,7 @@ public class BrowserFrame extends JFrame {
                         return obj.name;
                     case 1: {
                         if(obj instanceof FSFile) {
-                            if(!obj.name.contains(".")) return "File";
-                            String extension = obj.name.substring(obj.name.lastIndexOf('.', obj.name.length()));
-                            try {
-                                Process proc0 = Runtime.getRuntime().exec(
-                                        "reg query HKEY_CURRENT_USER\\SOFTWARE\\Classes\\" + extension + " /v \"\"");
-                                BufferedReader stdin0 = new BufferedReader(
-                                        new InputStreamReader(proc0.getInputStream()));
-                                String s = null, association = "";
-                                while((s = stdin0.readLine()) != null) {
-                                    if(s.contains("(Default)")) {
-                                        association = s;
-                                    }
-                                }
-                                stdin0.close();
-                                if(association.isEmpty()) return "File";
-                                association = association.substring(association.indexOf("REG_SZ") + 6).trim();
-                                Process proc1 = Runtime.getRuntime().exec(
-                                        "reg query HKEY_LOCAL_MACHINE\\SOFTWARE\\Classes\\" + association + " /v \"\"");
-                                BufferedReader stdin1 = new BufferedReader(
-                                        new InputStreamReader(proc1.getInputStream()));
-                                s = null;
-                                String description = "";
-                                while((s = stdin1.readLine()) != null) {
-                                    if(s.contains("(Default)")) {
-                                        description = s;
-                                    }
-                                }
-                                stdin1.close();
-                                if(description.isEmpty()) return "File";
-                                return description.substring(description.indexOf("REG_SZ") + 6).trim();
-                            } catch(IOException e) {
-                                e.printStackTrace();
-                            }
+                            return getDescription((FSFile) obj);
                         } else {
                             return "Directory";
                         }
@@ -160,5 +131,44 @@ public class BrowserFrame extends JFrame {
         table.getColumnModel().getColumn(0).setPreferredWidth(450);
         table.getColumnModel().getColumn(1).setPreferredWidth(250);
         table.getColumnModel().getColumn(2).setPreferredWidth(100);
+    }
+
+    private static String getDescription(FSFile file) {
+        if(!file.name.contains(".")) return "File";
+        String extension = file.name.substring(file.name.lastIndexOf('.', file.name.length()));
+        if(DESCRIPTION_CACHE.containsKey(extension)) return DESCRIPTION_CACHE.get(extension);
+        try {
+            Process proc0 = Runtime.getRuntime()
+                    .exec("reg query HKEY_CURRENT_USER\\SOFTWARE\\Classes\\" + extension + " /v \"\"");
+            BufferedReader stdin0 = new BufferedReader(new InputStreamReader(proc0.getInputStream()));
+            String s = null, association = "";
+            while((s = stdin0.readLine()) != null) {
+                if(s.contains("(Default)")) {
+                    association = s;
+                }
+            }
+            stdin0.close();
+            if(association.isEmpty()) return "File";
+            association = association.substring(association.indexOf("REG_SZ") + 6).trim();
+            Process proc1 = Runtime.getRuntime()
+                    .exec("reg query HKEY_LOCAL_MACHINE\\SOFTWARE\\Classes\\" + association + " /v \"\"");
+            BufferedReader stdin1 = new BufferedReader(new InputStreamReader(proc1.getInputStream()));
+            s = null;
+            String description = "";
+            while((s = stdin1.readLine()) != null) {
+                if(s.contains("(Default)")) {
+                    description = s;
+                }
+            }
+            stdin1.close();
+            if(description.isEmpty()) return "File";
+            description = description.substring(description.indexOf("REG_SZ") + 6).trim();
+            DESCRIPTION_CACHE.put(extension, description);
+            return description;
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+        DESCRIPTION_CACHE.put(extension, "File");
+        return "File";
     }
 }
