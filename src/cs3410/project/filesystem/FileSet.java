@@ -166,7 +166,7 @@ public class FileSet implements Collection<FileSystemObject> {
     }
 
     private static void sort(FileSystemObject[] array, int left, int right) {
-        if(left == right) {
+        if(array.length == 0 || left == right) {
             return;
         }
         int mid = (left + right) / 2;

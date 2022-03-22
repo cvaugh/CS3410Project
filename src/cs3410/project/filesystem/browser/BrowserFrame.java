@@ -9,11 +9,16 @@ import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
@@ -31,6 +36,8 @@ public class BrowserFrame extends JFrame {
     private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase().contains("win");
     private final JTable table = new JTable();
     private final JScrollPane scrollPane = new JScrollPane(table);
+    private final JPanel sidebar = new JPanel();
+    private final JButton deleteSelected = new JButton("Delete Selected");
     public FSDirectory currentRoot;
 
     public BrowserFrame() {
@@ -49,7 +56,52 @@ public class BrowserFrame extends JFrame {
                 System.exit(0);
             }
         });
-        this.getContentPane().setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
+        this.getContentPane().setLayout(new BoxLayout(this.getContentPane(), BoxLayout.X_AXIS));
+        sidebar.setPreferredSize(new Dimension(200, 800));
+        sidebar.setFont(table.getFont());
+        JButton newFile = new JButton("Create File");
+        newFile.setPreferredSize(new Dimension(180, 20));
+        newFile.addActionListener(e -> {
+            String name = JOptionPane.showInputDialog("Enter a name for the file:");
+            if(name == null || name.length() == 0) return;
+            if(currentRoot.getChild(name) != null) {
+                JOptionPane.showMessageDialog(this,
+                        String.format("An object with the name \"%s\" already exists", name), "Failed to create file",
+                        JOptionPane.ERROR_MESSAGE);
+            } else {
+                currentRoot.children.add(new FSFile(currentRoot, name));
+                update(currentRoot);
+            }
+        });
+        sidebar.add(newFile);
+        JButton newDirectory = new JButton("Create Directory");
+        newDirectory.setPreferredSize(newFile.getPreferredSize());
+        newDirectory.addActionListener(e -> {
+            String name = JOptionPane.showInputDialog("Enter a name for the directory:");
+            if(name == null || name.length() == 0) return;
+            if(currentRoot.getChild(name) != null) {
+                JOptionPane.showMessageDialog(this,
+                        String.format("An object with the name \"%s\" already exists", name),
+                        "Failed to create directory", JOptionPane.ERROR_MESSAGE);
+            } else {
+                currentRoot.children.add(new FSDirectory(currentRoot, name));
+                update(currentRoot);
+            }
+        });
+        sidebar.add(newDirectory);
+        deleteSelected.setPreferredSize(newFile.getPreferredSize());
+        deleteSelected.setEnabled(false);
+        deleteSelected.addActionListener(e -> {
+            List<FileSystemObject> toRemove = new ArrayList<>();
+            for(int row : table.getSelectedRows()) {
+                if(row == 0 && currentRoot.isRoot()) continue;
+                toRemove.add(currentRoot.children.get(row - (currentRoot.isRoot() ? 0 : 1)));
+            }
+            currentRoot.children.removeAll(toRemove);
+            update(currentRoot);
+        });
+        sidebar.add(deleteSelected);
+        add(sidebar);
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -68,6 +120,8 @@ public class BrowserFrame extends JFrame {
                         // TODO open file
                     }
                 }
+                deleteSelected.setEnabled(table.getSelectedRowCount() > 0
+                        && (table.getRowCount() == 1 || (table.getRowCount() > 1 && table.getSelectedRow() != 0)));
             }
         });
         table.setFont(new Font(table.getFont().getName(), Font.PLAIN, 14));
