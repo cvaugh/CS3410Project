@@ -33,6 +33,7 @@ public class BrowserFrame extends JFrame {
     private static final long serialVersionUID = -6275492324105494374L;
 
     private static final Map<String, String> DESCRIPTION_CACHE = new HashMap<>();
+    private static final Map<String, String> MIME_CACHE = new HashMap<>();
     private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase().contains("win");
     private final JTable table = new JTable();
     private final JScrollPane scrollPane = new JScrollPane(table);
@@ -63,7 +64,8 @@ public class BrowserFrame extends JFrame {
         newFile.setPreferredSize(new Dimension(180, 20));
         newFile.addActionListener(e -> {
             String name = JOptionPane.showInputDialog("Enter a name for the file:");
-            if(name == null || name.length() == 0) return;
+            if(name == null || name.isBlank()) return;
+            name = name.trim();
             if(currentRoot.getChild(name) != null) {
                 JOptionPane.showMessageDialog(this,
                         String.format("An object with the name \"%s\" already exists", name), "Failed to create file",
@@ -78,13 +80,14 @@ public class BrowserFrame extends JFrame {
         newDirectory.setPreferredSize(newFile.getPreferredSize());
         newDirectory.addActionListener(e -> {
             String name = JOptionPane.showInputDialog("Enter a name for the directory:");
-            if(name == null || name.length() == 0) return;
+            if(name == null || name.isBlank()) return;
+            name = name.trim();
             if(currentRoot.getChild(name) != null) {
                 JOptionPane.showMessageDialog(this,
                         String.format("An object with the name \"%s\" already exists", name),
                         "Failed to create directory", JOptionPane.ERROR_MESSAGE);
             } else {
-                currentRoot.children.add(new FSDirectory(currentRoot, name));
+                currentRoot.children.add(new FSDirectory(currentRoot, name.trim()));
                 update(currentRoot);
             }
         });
@@ -164,7 +167,7 @@ public class BrowserFrame extends JFrame {
                     FileSystemObject obj = root.children.get(rowIndex - (root.isRoot() ? 0 : 1));
                     switch(columnIndex) {
                     case 0:
-                        return obj.name;
+                        return String.format("%c %s", obj.isDirectory() ? 0x1F4C1 : getIcon((FSFile) obj), obj.name);
                     case 1: {
                         if(obj.isDirectory()) {
                             return "Directory";
@@ -188,9 +191,56 @@ public class BrowserFrame extends JFrame {
         table.getColumnModel().getColumn(2).setPreferredWidth(100);
     }
 
+    private static int getIcon(FSFile file) {
+        if(!IS_WINDOWS || !file.name.contains(".")) return 0x1F4C4;
+        String extension = file.name.substring(file.name.lastIndexOf('.', file.name.length()));
+        if(!MIME_CACHE.containsKey(extension)) {
+            try {
+                String mime = "";
+                Process proc0 = Runtime.getRuntime()
+                        .exec("reg query HKEY_CLASSES_ROOT\\" + extension + " /v \"Content Type\"");
+                BufferedReader stdin0 = new BufferedReader(new InputStreamReader(proc0.getInputStream()));
+                String s = null;
+                while((s = stdin0.readLine()) != null) {
+                    if(s.contains("Content Type")) {
+                        mime = s;
+                    }
+                }
+                stdin0.close();
+                if(mime.isEmpty()) {
+                    MIME_CACHE.put(extension, null);
+                } else {
+                    MIME_CACHE.put(extension, mime.substring(mime.indexOf("REG_SZ") + 6).trim());
+                }
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return getIcon(MIME_CACHE.get(extension));
+    }
+
+    private static int getIcon(String mimeType) {
+        if(mimeType == null) return 0x1F4C4;
+        switch(mimeType) {
+        case "application/pdf":
+        case "application/msword":
+        case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+            return 0x1F4DC;
+        case "image/bmp":
+        case "image/gif":
+        case "image/jpeg":
+        case "image/png":
+        case "image/svg+xml":
+        case "image/tiff":
+        case "image/webp":
+            return 0x1F5BC;
+        default:
+            return 0x1F4C4;
+        }
+    }
+
     private static String getDescription(FSFile file) {
         if(!IS_WINDOWS || !file.name.contains(".")) return "File";
-        System.out.println();
         String extension = file.name.substring(file.name.lastIndexOf('.', file.name.length()));
         if(DESCRIPTION_CACHE.containsKey(extension)) return DESCRIPTION_CACHE.get(extension);
         try {
@@ -206,11 +256,11 @@ public class BrowserFrame extends JFrame {
             stdin0.close();
             if(association.isEmpty()) return "File";
             association = association.substring(association.indexOf("REG_SZ") + 6).trim();
+            String description = "";
             Process proc1 = Runtime.getRuntime()
                     .exec("reg query HKEY_LOCAL_MACHINE\\SOFTWARE\\Classes\\" + association + " /v \"\"");
             BufferedReader stdin1 = new BufferedReader(new InputStreamReader(proc1.getInputStream()));
             s = null;
-            String description = "";
             while((s = stdin1.readLine()) != null) {
                 if(s.contains("(Default)")) {
                     description = s;
