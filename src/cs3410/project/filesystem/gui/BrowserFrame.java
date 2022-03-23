@@ -59,7 +59,7 @@ public class BrowserFrame extends JFrame {
                 }
                 BrowserFrame.this.setVisible(false);
                 BrowserFrame.this.dispose();
-                System.exit(0);
+                if(!Main.isControlFrameOpen) System.exit(0);
             }
         });
         this.getContentPane().setLayout(new BoxLayout(this.getContentPane(), BoxLayout.X_AXIS));
@@ -137,6 +137,7 @@ public class BrowserFrame extends JFrame {
         scrollPane.setViewportView(table);
         add(scrollPane);
         pack();
+        setLocationRelativeTo(null);
         update(Main.fs.root);
         table.setRowHeight(table.getRowHeight() + 4);
     }

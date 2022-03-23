@@ -347,4 +347,15 @@ public class FileSystem {
         }
         return totalSize;
     }
+
+    public static void load(File container) throws IOException {
+        if(container.isDirectory()) throw new RuntimeException("Container may not be a directory");
+        Main.fs = new FileSystem(container);
+        if(Main.fs.container.exists()) {
+            Main.fs.readContainer();
+        } else {
+            Main.fs.container.createNewFile();
+            Main.fs.mftContainer.createNewFile();
+        }
+    }
 }

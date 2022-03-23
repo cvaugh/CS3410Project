@@ -5,11 +5,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 import cs3410.project.filesystem.gui.BrowserFrame;
+import cs3410.project.filesystem.gui.ControlFrame;
 
 public class Main {
     public static FileSystem fs;
+    public static boolean isControlFrameOpen = false;
 
     public static void main(String[] args) {
+        File container = null;
         File toCopy = null;
         String toCopyDestination = "";
         String toExtract = "";
@@ -20,6 +23,13 @@ public class Main {
             // TODO parse arguments in a more standard way
             try {
                 for(int i = 0; i < args.length; i++) {
+                    if(args[i].equals("-i")) {
+                        File file = new File(args[i + 1]);
+                        if(file.isDirectory()) {
+                            throw new RuntimeException("Container is a directory: " + file.getAbsolutePath());
+                        }
+                        container = file;
+                    }
                     // Copy an external file into the file system
                     if(args[i].equals("-c")) {
                         File file = new File(args[i + 1]);
@@ -66,73 +76,77 @@ public class Main {
             }
         }
 
-        fs = new FileSystem(new File("test.fs"));
-        try {
-            if(fs.container.exists()) {
-                fs.readContainer();
-            } else {
-                fs.container.createNewFile();
-                fs.mftContainer.createNewFile();
-            }
-        } catch(IOException e) {
-            e.printStackTrace();
-        }
-        if(toCopy != null) {
-            if(toCopyDestination.contains("%s")) {
-                toCopyDestination = String.format(toCopyDestination, toCopy.getName());
-            }
-            if(toCopyDestination.isEmpty()) {
-                toCopyDestination = "/" + toCopy.getName();
-            }
-            String[] splitPath = toCopyDestination.split("/");
-            String targetName = splitPath[splitPath.length - 1];
-            FSDirectory parent = fs.createParents(fs.root, toCopyDestination);
-            if(fs.exists(toCopyDestination)) {
-                System.err.println("File already exists at destination: " + toCopyDestination);
-            } else {
-                FSFile target = fs.newFile(parent, targetName);
-                try {
-                    target.write(Files.readAllBytes(toCopy.toPath()));
-                } catch(IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        if(!toExtract.isEmpty()) {
-            FileSystemObject file = fs.getObject(toExtract);
-            if(file == null) {
-                throw new RuntimeException("File does not exist: " + toExtract);
-            }
-            if(file.isDirectory()) {
-                // TODO
-                throw new RuntimeException("Unimplemented");
-            }
-            File out = new File(toExtractDestination);
-            if(out.exists() && !forceExtract) {
-                System.err.println(
-                        "File already exists: " + out.getAbsolutePath() + "\nRun again with the -f flag to overwrite");
-            } else if(out.exists() && out.isDirectory()) {
-                System.err.println("Destination is a directory: " + out.getAbsolutePath());
-            } else {
-                try {
-                    Files.write(out.toPath(), ((FSFile) file).data);
-                } catch(IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        if(browser) {
-            BrowserFrame browserFrame = new BrowserFrame();
-            browserFrame.setVisible(true);
-        } else {
+        if(args.length == 0) {
+            ControlFrame controlFrame = new ControlFrame();
+            controlFrame.setVisible(true);
+            isControlFrameOpen = true;
+        } else if(container != null) {
             try {
-                fs.writeContainer();
+                FileSystem.load(container);
             } catch(IOException e) {
                 e.printStackTrace();
             }
-        }
-        if(printBeforeExit) {
-            fs.getTreeAsString(fs.root, true);
+
+            if(toCopy != null) {
+                if(toCopyDestination.contains("%s")) {
+                    toCopyDestination = String.format(toCopyDestination, toCopy.getName());
+                }
+                if(toCopyDestination.isEmpty()) {
+                    toCopyDestination = "/" + toCopy.getName();
+                }
+                String[] splitPath = toCopyDestination.split("/");
+                String targetName = splitPath[splitPath.length - 1];
+                FSDirectory parent = fs.createParents(fs.root, toCopyDestination);
+                if(fs.exists(toCopyDestination)) {
+                    System.err.println("File already exists at destination: " + toCopyDestination);
+                } else {
+                    FSFile target = fs.newFile(parent, targetName);
+                    try {
+                        target.write(Files.readAllBytes(toCopy.toPath()));
+                    } catch(IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            if(!toExtract.isEmpty()) {
+                FileSystemObject file = fs.getObject(toExtract);
+                if(file == null) {
+                    throw new RuntimeException("File does not exist: " + toExtract);
+                }
+                if(file.isDirectory()) {
+                    // TODO
+                    throw new RuntimeException("Unimplemented");
+                }
+                File out = new File(toExtractDestination);
+                if(out.exists() && !forceExtract) {
+                    System.err.println("File already exists: " + out.getAbsolutePath()
+                            + "\nRun again with the -f flag to overwrite");
+                } else if(out.exists() && out.isDirectory()) {
+                    System.err.println("Destination is a directory: " + out.getAbsolutePath());
+                } else {
+                    try {
+                        Files.write(out.toPath(), ((FSFile) file).data);
+                    } catch(IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            if(browser) {
+                BrowserFrame browserFrame = new BrowserFrame();
+                browserFrame.setVisible(true);
+            } else {
+                try {
+                    fs.writeContainer();
+                } catch(IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(printBeforeExit) {
+                fs.getTreeAsString(fs.root, true);
+            }
+        } else {
+            System.err.println("Container path must be specified with -i");
+            System.exit(1);
         }
     }
 }
