@@ -1,0 +1,154 @@
+application/bat:Batch File
+application/epub+zip:EPUB eBook
+application/freemind:Mind Map File
+application/gzip:GZIP Archive
+application/hta:HTML Application
+application/java-archive:Java Archive
+application/java-vm:Java Class File
+application/json:JSON Document
+application/mathml+xml:MathML File
+application/msword:Microsoft Word Document
+application/octet-stream:Binary File
+application/ogg:Vorbis Container
+application/pdf:PDF Document
+application/postscript:PostScript File
+application/rss+xml:RSS Feed
+application/rtf:Rich Text File
+application/vnd.amazon.ebook:Amazon eBook
+application/vnd.android.package-archive:Android Package
+application/vnd.apple.installer+xml:Apple Software Package
+application/vnd.apple.keynote:Keynote Presentation
+application/vnd.coffeescript:CoffeeScript File
+application/vnd.google-earth.kml+xml:KML File
+application/vnd.lotus-1-2-3:Lotus 1-2-3 File
+application/vnd.mozilla.xul+xml:XUL File
+application/vnd.ms-cab-compressed:Cabinet Archive
+application/vnd.ms-excel.addin.macroenabled.12:Microsoft Excel Macro-Enabled Add-In
+application/vnd.ms-excel.sheet.macroenabled.12:Microsoft Excel Macro-Enabled Spreadsheet
+application/vnd.ms-excel.template.macroenabled.12:Microsoft Excel Macro-Enabled Spreadsheet
+application/vnd.ms-excel:Microsoft Excel File
+application/vnd.ms-fontobject:Embedded OpenType Font
+application/vnd.ms-outlook-pst:Outlook Data File
+application/vnd.ms-outlook:Outlook File
+application/vnd.ms-powerpoint.slide.macroenabled.12:Microsoft PowerPoint Macro-Enabled Slide
+application/vnd.ms-powerpoint.slideshow.macroenabled.12:Microsoft PowerPoint Macro-Enabled Presentation
+application/vnd.ms-powerpoint:Microsoft PowerPoint Presentation
+application/vnd.ms-word.document.macroEnabled.12:Microsoft Word Macro-Enabled Document
+application/vnd.ms-word.template.macroEnabled.12:Microsoft Word Macro-Enabled Template
+application/vnd.ms-xpsdocument:Microsoft XPS Document
+application/vnd.oasis.opendocument.formula:OpenOffice Formula
+application/vnd.oasis.opendocument.presentation:OpenOffice Presentation
+application/vnd.oasis.opendocument.spreadsheet:OpenOffice Spreadsheet
+application/vnd.oasis.opendocument.text:OpenOffice Document
+application/vnd.openxmlformats-officedocument.presentationml.presentation:Office PowerPoint Presentation
+application/vnd.openxmlformats-officedocument.presentationml.slide:Office PowerPoint Slide
+application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:Office Spreadsheet
+application/vnd.openxmlformats-officedocument.spreadsheetml.template:Office Spreadsheet Template
+application/vnd.openxmlformats-officedocument.wordprocessingml.document:Office Document
+application/vnd.openxmlformats-officedocument.wordprocessingml.template:Office Document Template
+application/vnd.rar:WinRAR Archive
+application/vnd.rn-realmedia:RealMedia Container
+application/vnd.valve.source.material:Source Engine Material
+application/vnd.visio2013:Microsoft Visio 2013 Document
+application/vnd.visio:Microsoft Visio Document
+application/vnd.wordperfect:WordPerfect Document
+application/x-3ds:3ds Max Model
+application/x-7z-compressed:7-Zip Archive
+application/x-apple-diskimage:Apple Disk Image
+application/x-aspx:ASP.NET File
+application/x-blender:Blender File
+application/x-bzip2:BZIP2 Archive
+application/x-bzip:BZIP Archive
+application/x-compress:Unix Compress Archive
+application/x-csh:C Shell Script
+application/x-debian-package:Debian Package
+application/x-disk-image:Disk Image
+application/x-doom:Doom Game Data
+application/x-dosexec:DOS Executable
+application/x-elf:ELF Binary
+application/x-freearc:FreeArc Archive
+application/x-fs:File System Container
+application/x-httpd-php:PHP Document
+application/x-java-jnlp-file:JNLP File
+application/x-kdb:KeePass 1 Database
+application/x-kdbx:KeePass Database
+application/x-lzip:LZIP Archive
+application/x-ms-shortcut:Shortcut
+application/x-ms-wmd:Windows Media Player Container
+application/x-ms-wmz:Windows Media Player Skin
+application/x-msdownload:Application
+application/x-mspublisher:Microsoft Publisher Document
+application/x-sh:Bash Script
+application/x-shockwave-flash:Adobe Flash File
+application/x-sqlite3:SQLite Database
+application/x-tar:TAR Archive
+application/x-tex:LaTeX File
+application/x-vhd:Virtual Hard Disk
+application/x-vmdk:Virtual Machine Disk
+application/x-yaml:YAML Document
+application/xhtml+xml:XHTML Document
+application/zip:ZIP Archive
+audio/aac:AAC Audio
+audio/flac:FLAC Audio
+audio/mpeg:MP3 Audio
+audio/mpg:MPG Audio
+audio/ogg:Vorbis Audio
+audio/opus:Opus Audio
+audio/sp-midi:MIDI File
+audio/wav:Wave Audio
+audio/webm:WEBM Audio
+audio/x-aiff:AIFF Audio
+audio/x-ms-wma:Windows Media Audio
+font/otf:OpenType Font
+font/ttf:TrueType Font
+font/woff2:WOFF2 Font
+font/woff:WOFF Font
+image/avif:AVIF Image
+image/bmp:Bitmap Image
+image/gif:GIF Image
+image/heic-sequence:HEIC Image Sequence
+image/heic:HEIC Image
+image/heif-sequence:HEIF Image Sequence
+image/heif:HEIF Image
+image/jp2:JPEG 2000 Image
+image/jpeg:JPEG Image
+image/png:PNG Image
+image/svg+xml:SVG Image
+image/tiff:TIFF Image
+image/vnd.adobe.photoshop:Adobe Photoshop Document
+image/vnd.microsoft.icon:Icon
+image/vnd.valve.source.texture:Source Engine Texture
+image/webp:WEBP Image
+image/x-win-bitmap:Cursor File
+message/rfc822:Electronic Message
+model/gltf+json:glTF JSON File
+model/gltf-binary:glTF Binary File
+model/stl:STL Model
+model/vnd.collada+xml:COLLADA Model
+model/vnd.valve.source.compiled-map:Source Engine Map
+multipart/related:Container File
+text/asp:ASP File
+text/calendar:Calendar File
+text/css:Cascading Style Sheet
+text/csv:Comma Separated Values File
+text/html:HTML Document
+text/javascript:JavaScript File
+text/markdown:Markdown File
+text/plain:Text Document
+text/tab-separated-values:Tab Separated Values File
+text/vcard:vCard File
+text/x-properties:Configuration File
+text/xml:XML Document
+video/3gpp2:3GPP2 Multimedia File
+video/3gpp:3GPP Multimedia File
+video/h264:H.264 Video
+video/mp2t:MPEG-2 Transport Stream
+video/mp4:MPEG-4 Video
+video/mpeg:MPEG-1 Video
+video/ogg:Vorbis Video
+video/quicktime:QuickTime Video
+video/webm:WEBM Video
+video/x-flv:Flash Video
+video/x-matroska:Matroska Multimedia Container
+video/x-ms-wmv:Windows Media Video
+video/x-msvideo:AVI Video

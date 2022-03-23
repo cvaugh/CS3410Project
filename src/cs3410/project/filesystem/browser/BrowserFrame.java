@@ -6,9 +6,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,9 +32,9 @@ import cs3410.project.filesystem.Utils;
 public class BrowserFrame extends JFrame {
     private static final long serialVersionUID = -6275492324105494374L;
 
-    private static final Map<String, String> DESCRIPTION_CACHE = new HashMap<>();
     private static final Map<String, String> MIME_CACHE = new HashMap<>();
-    private static final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase().contains("win");
+    private static final Map<String, String> DESCRIPTION_CACHE = new HashMap<>();
+    private static final Map<String, Integer> ICON_CACHE = new HashMap<>();
     private final JTable table = new JTable();
     private final JScrollPane scrollPane = new JScrollPane(table);
     private final JPanel sidebar = new JPanel();
@@ -42,6 +42,11 @@ public class BrowserFrame extends JFrame {
     public FSDirectory currentRoot;
 
     public BrowserFrame() {
+        try {
+            loadMetadata();
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
         setTitle(Main.fs.container.getName());
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
@@ -191,90 +196,39 @@ public class BrowserFrame extends JFrame {
         table.getColumnModel().getColumn(2).setPreferredWidth(100);
     }
 
-    private static int getIcon(FSFile file) {
-        if(!IS_WINDOWS || !file.name.contains(".")) return 0x1F4C4;
-        String extension = file.name.substring(file.name.lastIndexOf('.', file.name.length()));
-        if(!MIME_CACHE.containsKey(extension)) {
-            try {
-                String mime = "";
-                Process proc0 = Runtime.getRuntime()
-                        .exec("reg query HKEY_CLASSES_ROOT\\" + extension + " /v \"Content Type\"");
-                BufferedReader stdin0 = new BufferedReader(new InputStreamReader(proc0.getInputStream()));
-                String s = null;
-                while((s = stdin0.readLine()) != null) {
-                    if(s.contains("Content Type")) {
-                        mime = s;
-                    }
-                }
-                stdin0.close();
-                if(mime.isEmpty()) {
-                    MIME_CACHE.put(extension, null);
-                } else {
-                    MIME_CACHE.put(extension, mime.substring(mime.indexOf("REG_SZ") + 6).trim());
-                }
-            } catch(IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return getIcon(MIME_CACHE.get(extension));
+    private static String getMimeType(FSFile file) {
+        if(!file.name.contains(".")) return "";
+        return MIME_CACHE.getOrDefault(file.name.substring(file.name.lastIndexOf('.', file.name.length())), "");
     }
 
-    private static int getIcon(String mimeType) {
-        if(mimeType == null) return 0x1F4C4;
-        switch(mimeType) {
-        case "application/pdf":
-        case "application/msword":
-        case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-            return 0x1F4DC;
-        case "image/bmp":
-        case "image/gif":
-        case "image/jpeg":
-        case "image/png":
-        case "image/svg+xml":
-        case "image/tiff":
-        case "image/webp":
-            return 0x1F5BC;
-        default:
-            return 0x1F4C4;
-        }
+    private static int getIcon(FSFile file) {
+        if(!file.name.contains(".")) return 0x1F4C4;
+        return ICON_CACHE.getOrDefault(getMimeType(file), 0x1F4C4);
     }
 
     private static String getDescription(FSFile file) {
-        if(!IS_WINDOWS || !file.name.contains(".")) return "File";
-        String extension = file.name.substring(file.name.lastIndexOf('.', file.name.length()));
-        if(DESCRIPTION_CACHE.containsKey(extension)) return DESCRIPTION_CACHE.get(extension);
-        try {
-            Process proc0 = Runtime.getRuntime()
-                    .exec("reg query HKEY_CURRENT_USER\\SOFTWARE\\Classes\\" + extension + " /v \"\"");
-            BufferedReader stdin0 = new BufferedReader(new InputStreamReader(proc0.getInputStream()));
-            String s = null, association = "";
-            while((s = stdin0.readLine()) != null) {
-                if(s.contains("(Default)")) {
-                    association = s;
-                }
+        if(!file.name.contains(".")) return "File";
+        return DESCRIPTION_CACHE.getOrDefault(getMimeType(file), "File");
+    }
+
+    private static void loadMetadata() throws IOException {
+        File mimeFile = new File("mime-types.txt");
+        File descriptionFile = new File("type-names.txt");
+        File iconFile = new File("type-icons.txt");
+        for(String line : Files.readAllLines(mimeFile.toPath())) {
+            String[] split = line.split(":", 2);
+            String[] extensions = split[1].split(" ");
+            for(String extension : extensions) {
+                MIME_CACHE.put(extension, split[0]);
             }
-            stdin0.close();
-            if(association.isEmpty()) return "File";
-            association = association.substring(association.indexOf("REG_SZ") + 6).trim();
-            String description = "";
-            Process proc1 = Runtime.getRuntime()
-                    .exec("reg query HKEY_LOCAL_MACHINE\\SOFTWARE\\Classes\\" + association + " /v \"\"");
-            BufferedReader stdin1 = new BufferedReader(new InputStreamReader(proc1.getInputStream()));
-            s = null;
-            while((s = stdin1.readLine()) != null) {
-                if(s.contains("(Default)")) {
-                    description = s;
-                }
-            }
-            stdin1.close();
-            if(description.isEmpty()) return "File";
-            description = description.substring(description.indexOf("REG_SZ") + 6).trim();
-            DESCRIPTION_CACHE.put(extension, description);
-            return description;
-        } catch(IOException e) {
-            e.printStackTrace();
         }
-        DESCRIPTION_CACHE.put(extension, "File");
-        return "File";
+        for(String line : Files.readAllLines(descriptionFile.toPath())) {
+            String[] split = line.split(":", 2);
+            DESCRIPTION_CACHE.put(split[0], split[1]);
+        }
+        for(String line : Files.readAllLines(iconFile.toPath())) {
+            String[] split = line.split(":", 2);
+            ICON_CACHE.put(split[0], Integer.parseInt(split[1], 16));
+        }
     }
 }

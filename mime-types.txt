@@ -1,0 +1,154 @@
+application/bat:.bat
+application/epub+zip:.epub
+application/freemind:.mm
+application/gzip:.gz
+application/hta:.hta
+application/java-archive:.jar
+application/java-vm:.class
+application/json:.json
+application/mathml+xml:.mml
+application/msword:.doc
+application/octet-stream:.bin .crdownload .dat .mca .mcr .part .partial
+application/ogg:.ogx
+application/pdf:.pdf
+application/postscript:.ai .ps
+application/rss+xml:.rss
+application/rtf:.rtf
+application/vnd.amazon.ebook:.azw .mobi
+application/vnd.android.package-archive:.apk
+application/vnd.apple.installer+xml:.mpkg .pkg
+application/vnd.apple.keynote:.keynote
+application/vnd.coffeescript:.coffee
+application/vnd.google-earth.kml+xml:.kml
+application/vnd.lotus-1-2-3:.123 .wks
+application/vnd.mozilla.xul+xml:.xul
+application/vnd.ms-cab-compressed:.cab
+application/vnd.ms-excel.addin.macroenabled.12:.xlam
+application/vnd.ms-excel.sheet.macroenabled.12:.xlsm
+application/vnd.ms-excel.template.macroenabled.12:.xltm
+application/vnd.ms-excel:.xlm .xls
+application/vnd.ms-fontobject:.eot
+application/vnd.ms-outlook-pst:.pst
+application/vnd.ms-outlook:.msg .ost
+application/vnd.ms-powerpoint.slide.macroenabled.12:.sldm
+application/vnd.ms-powerpoint.slideshow.macroenabled.12:.ppsm
+application/vnd.ms-powerpoint:.pot .pps .ppt
+application/vnd.ms-word.document.macroEnabled.12:docm
+application/vnd.ms-word.template.macroEnabled.12:dotm
+application/vnd.ms-xpsdocument:.xps
+application/vnd.oasis.opendocument.formula:.odf
+application/vnd.oasis.opendocument.presentation:.odp
+application/vnd.oasis.opendocument.spreadsheet:.ods
+application/vnd.oasis.opendocument.text:.odt
+application/vnd.openxmlformats-officedocument.presentationml.presentation:.pptx
+application/vnd.openxmlformats-officedocument.presentationml.slide:.sldx
+application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:.xlsx
+application/vnd.openxmlformats-officedocument.spreadsheetml.template:.xltx
+application/vnd.openxmlformats-officedocument.wordprocessingml.document:.docx
+application/vnd.openxmlformats-officedocument.wordprocessingml.template:.dotx
+application/vnd.rar:.rar
+application/vnd.rn-realmedia:.rm
+application/vnd.valve.source.material:.vmt
+application/vnd.visio2013:.vsdx .vstx
+application/vnd.visio:.vsd .vsdm .vss .vssm .vst .vstm
+application/vnd.wordperfect:.wpd
+application/x-3ds:.3ds
+application/x-7z-compressed:.7z
+application/x-apple-diskimage:.dmg
+application/x-aspx:.aspx
+application/x-blender:.blend
+application/x-bzip2:.bz2
+application/x-bzip:.bz
+application/x-compress:.z
+application/x-csh:.csh
+application/x-debian-package:.deb
+application/x-disk-image:.adf .ima .img .iso
+application/x-doom:.wad
+application/x-dosexec:.com
+application/x-elf:.o .so
+application/x-freearc:.arc
+application/x-fs:.fs
+application/x-httpd-php:.php
+application/x-java-jnlp-file:.jnlp
+application/x-kdb:.kdb
+application/x-kdbx:.kdbx
+application/x-lzip:.lz
+application/x-ms-shortcut:.lnk
+application/x-ms-wmd:.wmd
+application/x-ms-wmz:.wmz
+application/x-msdownload:.dll .exe
+application/x-mspublisher:.pub
+application/x-sh:.sh
+application/x-shockwave-flash:.swf
+application/x-sqlite3:.sqlite
+application/x-tar:.tar
+application/x-tex:.tex
+application/x-vhd:.vhd
+application/x-vmdk:.vmdk
+application/x-yaml:.yaml .yml
+application/xhtml+xml:.xhtml
+application/zip:.ear .war .zip
+audio/aac:.aac
+audio/flac:.flac
+audio/mpeg:.mp3
+audio/mpg:.mpg
+audio/ogg:.oga .ogg
+audio/opus:.opus
+audio/sp-midi:.mid .midi
+audio/wav:.wav
+audio/webm:.weba
+audio/x-aiff:.aif
+audio/x-ms-wma:.wma
+font/otf:.otf
+font/ttf:.ttf
+font/woff2:.woff2
+font/woff:.woff
+image/avif:.avif
+image/bmp:.bmp
+image/gif:.gif
+image/heic-sequence:.heics
+image/heic:.heic
+image/heif-sequence:.heifs
+image/heif:.heif
+image/jp2:.jp2
+image/jpeg:.jpeg .jpg
+image/png:.png
+image/svg+xml:.svg
+image/tiff:.tif .tiff
+image/vnd.adobe.photoshop:.psd
+image/vnd.microsoft.icon:.ico
+image/vnd.valve.source.texture:.vtf
+image/webp:.webp
+image/x-win-bitmap:.cur
+message/rfc822:.eml
+model/gltf+json:.gltf
+model/gltf-binary:.glb
+model/stl:.stl
+model/vnd.collada+xml:.dae
+model/vnd.valve.source.compiled-map:.bsp
+multipart/related:.mhtml
+text/asp:.asp
+text/calendar:.ics
+text/css:.css
+text/csv:.csv
+text/html:.htm .html
+text/javascript:.js .mjs
+text/markdown:.md
+text/plain:.ahk .asc .c .cgi .cpp .cs .diff .gitignore .go .h .hpp .info .ino .java .kt .log .lua .m .mtl .nfo .obj .patch .pl .ps1 .py .r .rb .rc .rs .scala .sql .swift .text .txt .vb
+text/tab-separated-values:.tsv
+text/vcard:.vcf
+text/x-properties:.cfg .cnf .conf .ini .lang .properties
+text/xml:.csproj .kdenlive .vbp .vbproj .vcproj .vdproj .xml
+video/3gpp2:.3g2
+video/3gpp:.3gp
+video/h264:.h264
+video/mp2t:.ts
+video/mp4:.mp4
+video/mpeg:.mpeg
+video/ogg:.ogv
+video/quicktime:.mov .qt
+video/webm:.webm
+video/x-flv:.flv
+video/x-matroska:.mkv
+video/x-ms-wmv:.wmv
+video/x-msvideo:.avi
