@@ -1,4 +1,4 @@
-package cs3410.project.filesystem.browser;
+package cs3410.project.filesystem.gui;
 
 import java.awt.Dimension;
 import java.awt.Font;

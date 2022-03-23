@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-import cs3410.project.filesystem.browser.BrowserFrame;
+import cs3410.project.filesystem.gui.BrowserFrame;
 
 public class Main {
     public static FileSystem fs;
