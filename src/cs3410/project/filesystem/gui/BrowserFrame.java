@@ -35,6 +35,7 @@ public class BrowserFrame extends JFrame {
     private static final Map<String, String> MIME_CACHE = new HashMap<>();
     private static final Map<String, String> DESCRIPTION_CACHE = new HashMap<>();
     private static final Map<String, Integer> ICON_CACHE = new HashMap<>();
+    private static boolean isMetadataLoaded = false;
     private final JTable table = new JTable();
     private final JScrollPane scrollPane = new JScrollPane(table);
     private final JPanel sidebar = new JPanel();
@@ -213,9 +214,12 @@ public class BrowserFrame extends JFrame {
     }
 
     private static void loadMetadata() throws IOException {
-        File mimeFile = new File("mime-types.txt");
-        File descriptionFile = new File("type-names.txt");
-        File iconFile = new File("type-icons.txt");
+        if(isMetadataLoaded) return;
+        File assetsDir = new File("assets");
+        if(!assetsDir.exists()) return;
+        File mimeFile = new File(assetsDir, "mime-types.txt");
+        File descriptionFile = new File(assetsDir, "type-names.txt");
+        File iconFile = new File(assetsDir, "type-icons.txt");
         for(String line : Files.readAllLines(mimeFile.toPath())) {
             String[] split = line.split(":", 2);
             String[] extensions = split[1].split(" ");
@@ -231,5 +235,6 @@ public class BrowserFrame extends JFrame {
             String[] split = line.split(":", 2);
             ICON_CACHE.put(split[0], Integer.parseInt(split[1], 16));
         }
+        isMetadataLoaded = true;
     }
 }
