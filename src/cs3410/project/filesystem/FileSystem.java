@@ -3,7 +3,6 @@ package cs3410.project.filesystem;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.SortedMap;
@@ -158,7 +157,7 @@ public class FileSystem {
         byte[] output = new byte[totalSize];
         for(int key : files.keySet()) {
             int index = files.get(key).startPosition;
-            System.arraycopy(ByteBuffer.allocate(4).putInt(files.get(key).getTotalSize()).array(), 0, output, index, 4);
+            System.arraycopy(Utils.intToBytes(files.get(key).getTotalSize()), 0, output, index, 4);
             index += 4;
             if(files.get(key).data != null) {
                 System.arraycopy(files.get(key).data, 0, output, index, files.get(key).data.length);
@@ -175,9 +174,9 @@ public class FileSystem {
                 try {
                     mft.write(obj.isDirectory() ? (byte) 0x44 : (byte) 0x46);
                     if(!obj.isDirectory()) {
-                        mft.write(ByteBuffer.allocate(4).putInt(((FSFile) obj).startPosition).array());
+                        mft.write(Utils.intToBytes(((FSFile) obj).startPosition));
                     }
-                    mft.write(ByteBuffer.allocate(4).putInt(obj.getPath().length()).array());
+                    mft.write(Utils.intToBytes(obj.getPath().length()));
                     mft.write(obj.getPath().getBytes());
                 } catch(IOException e) {
                     e.printStackTrace();
