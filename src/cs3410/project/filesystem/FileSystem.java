@@ -150,22 +150,20 @@ public class FileSystem {
                 }
             }
         });
-        int totalSize = 0;
+        int dataSize = 0;
         for(int key : files.keySet()) {
-            totalSize += files.get(key).getTotalSize();
+            dataSize += files.get(key).getTotalSize();
         }
-        byte[] output = new byte[totalSize];
+        byte[] data = new byte[dataSize];
         for(int key : files.keySet()) {
             int index = files.get(key).startPosition;
-            System.arraycopy(Utils.intToBytes(files.get(key).getTotalSize()), 0, output, index, 4);
+            System.arraycopy(Utils.intToBytes(files.get(key).getTotalSize()), 0, data, index, 4);
             index += 4;
             if(files.get(key).data != null) {
-                System.arraycopy(files.get(key).data, 0, output, index, files.get(key).data.length);
+                System.arraycopy(files.get(key).data, 0, data, index, files.get(key).data.length);
                 index += files.get(key).data.length;
             }
         }
-        Files.write(container.toPath(), output);
-
         ByteArrayOutputStream mft = new ByteArrayOutputStream();
         traverse(root, new FSAction() {
             @Override
@@ -183,7 +181,15 @@ public class FileSystem {
                 }
             }
         });
-        Files.write(mftContainer.toPath(), mft.toByteArray());
+        byte[] mftBytes = mft.toByteArray();
+
+        byte[] output = new byte[data.length + mftBytes.length + 8];
+        System.arraycopy(Utils.intToBytes(mftBytes.length), 0, output, 0, 4);
+        System.arraycopy(mftBytes, 0, output, 4, mftBytes.length);
+        System.arraycopy(Utils.intToBytes(data.length), 0, output, mftBytes.length + 4, 4);
+        System.arraycopy(data, 0, output, mftBytes.length + 8, data.length);
+
+        Files.write(container.toPath(), output);
     }
 
     /**
@@ -192,8 +198,11 @@ public class FileSystem {
      * @throws IOException
      */
     public void readContainer() throws IOException {
-        byte[] data = Files.readAllBytes(container.toPath());
-        byte[] mft = Files.readAllBytes(mftContainer.toPath());
+        byte[] full = Files.readAllBytes(container.toPath());
+        byte[] mft = new byte[Utils.bytesToInt(Arrays.copyOfRange(full, 0, 4))];
+        System.arraycopy(full, 4, mft, 0, mft.length);
+        byte[] data = new byte[Utils.bytesToInt(Arrays.copyOfRange(full, mft.length + 4, mft.length + 8))];
+        System.arraycopy(full, mft.length + 8, data, 0, data.length);
         for(int i = 0; i < mft.length; i++) {
             boolean isDirectory = mft[i] == (byte) 0x44;
             i++;
