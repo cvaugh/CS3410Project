@@ -21,6 +21,7 @@ public class ControlFrame extends JFrame {
     private static final long serialVersionUID = -62754963734494374L;
 
     private static final JFileChooser FILE_CHOOSER = new JFileChooser();
+    private final JButton newFS = new JButton("New File System Container");
     private final JButton openFS = new JButton("Open File System Container");
     private final JButton importFile = new JButton("Import File");
     private final JButton exportFile = new JButton("Export File");
@@ -49,10 +50,29 @@ public class ControlFrame extends JFrame {
         this.getContentPane().setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
         setMinimumSize(new Dimension(400, 200));
 
+        newFS.setMinimumSize(new Dimension(400, 40));
+        newFS.setMaximumSize(new Dimension(800, 60));
+        newFS.setAlignmentX(Component.CENTER_ALIGNMENT);
+        newFS.setFont(new Font(newFS.getFont().getName(), Font.BOLD, 24));
+        newFS.addActionListener(e -> {
+            FILE_CHOOSER.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            int rt = FILE_CHOOSER.showSaveDialog(this);
+            if(rt == JFileChooser.APPROVE_OPTION) {
+                if(FILE_CHOOSER.getSelectedFile().exists()) {
+                    JOptionPane.showMessageDialog(this, "The selected file already exists", "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                Main.fs = new FileSystem(FILE_CHOOSER.getSelectedFile());
+                setTitle("File System Container Manager: " + Main.fs.container.getName());
+                enableButtons();
+            }
+        });
+        add(newFS);
         openFS.setMinimumSize(new Dimension(400, 40));
         openFS.setMaximumSize(new Dimension(800, 60));
         openFS.setAlignmentX(Component.CENTER_ALIGNMENT);
-        openFS.setFont(new Font(openFS.getFont().getName(), Font.BOLD, 24));
+        openFS.setFont(new Font(newFS.getFont().getName(), Font.BOLD, 24));
         openFS.addActionListener(e -> {
             FILE_CHOOSER.setFileSelectionMode(JFileChooser.FILES_ONLY);
             int rt = FILE_CHOOSER.showOpenDialog(this);
@@ -60,9 +80,7 @@ public class ControlFrame extends JFrame {
                 try {
                     FileSystem.load(FILE_CHOOSER.getSelectedFile());
                     setTitle("File System Container Manager: " + Main.fs.container.getName());
-                    importFile.setEnabled(true);
-                    exportFile.setEnabled(true);
-                    openBrowser.setEnabled(true);
+                    enableButtons();
                 } catch(IOException ex) {
                     ex.printStackTrace();
                     JOptionPane.showMessageDialog(this, "An exception occurred while loading the container", "Error",
@@ -71,10 +89,10 @@ public class ControlFrame extends JFrame {
             }
         });
         add(openFS);
-        importFile.setMinimumSize(openFS.getMinimumSize());
-        importFile.setMaximumSize(openFS.getMaximumSize());
-        importFile.setAlignmentX(openFS.getAlignmentX());
-        importFile.setFont(openFS.getFont());
+        importFile.setMinimumSize(newFS.getMinimumSize());
+        importFile.setMaximumSize(newFS.getMaximumSize());
+        importFile.setAlignmentX(newFS.getAlignmentX());
+        importFile.setFont(newFS.getFont());
         importFile.setEnabled(false);
         importFile.addActionListener(e -> {
             FILE_CHOOSER.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
@@ -85,20 +103,20 @@ public class ControlFrame extends JFrame {
             }
         });
         add(importFile);
-        exportFile.setMinimumSize(openFS.getMinimumSize());
-        exportFile.setMaximumSize(openFS.getMaximumSize());
-        exportFile.setAlignmentX(openFS.getAlignmentX());
-        exportFile.setFont(openFS.getFont());
+        exportFile.setMinimumSize(newFS.getMinimumSize());
+        exportFile.setMaximumSize(newFS.getMaximumSize());
+        exportFile.setAlignmentX(newFS.getAlignmentX());
+        exportFile.setFont(newFS.getFont());
         exportFile.setEnabled(false);
         exportFile.addActionListener(e -> {
             JOptionPane.showMessageDialog(this, "This operation has not yet been implemented", "Unimplemented",
                     JOptionPane.WARNING_MESSAGE);
         });
         add(exportFile);
-        openBrowser.setMinimumSize(openFS.getMinimumSize());
-        openBrowser.setMaximumSize(openFS.getMaximumSize());
-        openBrowser.setAlignmentX(openFS.getAlignmentX());
-        openBrowser.setFont(openFS.getFont());
+        openBrowser.setMinimumSize(newFS.getMinimumSize());
+        openBrowser.setMaximumSize(newFS.getMaximumSize());
+        openBrowser.setAlignmentX(newFS.getAlignmentX());
+        openBrowser.setFont(newFS.getFont());
         openBrowser.setEnabled(false);
         openBrowser.addActionListener(e -> {
             BrowserFrame browserFrame = new BrowserFrame();
@@ -107,5 +125,11 @@ public class ControlFrame extends JFrame {
         add(openBrowser);
         pack();
         setLocationRelativeTo(null);
+    }
+
+    private void enableButtons() {
+        importFile.setEnabled(true);
+        exportFile.setEnabled(true);
+        openBrowser.setEnabled(true);
     }
 }
