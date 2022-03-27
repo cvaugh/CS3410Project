@@ -36,10 +36,11 @@ public class BrowserFrame extends JFrame {
     private static final Map<String, String> DESCRIPTION_CACHE = new HashMap<>();
     private static final Map<String, Integer> ICON_CACHE = new HashMap<>();
     private static boolean isMetadataLoaded = false;
-    private final JTable table = new JTable();
+    protected final JTable table = new JTable();
     private final JScrollPane scrollPane = new JScrollPane(table);
     private final JPanel sidebar = new JPanel();
     private final JButton deleteSelected = new JButton("Delete Selected");
+    private final JButton search = new JButton("Search");
     public FSDirectory currentRoot;
 
     public BrowserFrame() {
@@ -110,6 +111,12 @@ public class BrowserFrame extends JFrame {
             update(currentRoot);
         });
         sidebar.add(deleteSelected);
+        search.setPreferredSize(newFile.getPreferredSize());
+        search.addActionListener(e -> {
+            SearchFrame searchFrame = new SearchFrame(this);
+            searchFrame.setVisible(true);
+        });
+        sidebar.add(search);
         add(sidebar);
         table.addMouseListener(new MouseAdapter() {
             @Override
@@ -129,8 +136,7 @@ public class BrowserFrame extends JFrame {
                         // TODO open file
                     }
                 }
-                deleteSelected.setEnabled(table.getSelectedRowCount() > 0
-                        && (table.getRowCount() == 1 || (table.getRowCount() > 1 && table.getSelectedRow() != 0)));
+                updateButtons();
             }
         });
         table.setFont(new Font(table.getFont().getName(), Font.PLAIN, 14));
@@ -143,7 +149,7 @@ public class BrowserFrame extends JFrame {
         table.setRowHeight(table.getRowHeight() + 4);
     }
 
-    private void update(FSDirectory root) {
+    protected void update(FSDirectory root) {
         currentRoot = root;
         setTitle(Main.fs.container.getName() + " > " + currentRoot);
         table.setModel(new AbstractTableModel() {
@@ -198,17 +204,22 @@ public class BrowserFrame extends JFrame {
         table.getColumnModel().getColumn(2).setPreferredWidth(100);
     }
 
-    private static String getMimeType(FSFile file) {
+    protected void updateButtons() {
+        deleteSelected.setEnabled(table.getSelectedRowCount() > 0
+                && (table.getRowCount() == 1 || (table.getRowCount() > 1 && table.getSelectedRow() != 0)));
+    }
+
+    protected static String getMimeType(FSFile file) {
         if(!file.name.contains(".")) return "";
         return MIME_CACHE.getOrDefault(file.name.substring(file.name.lastIndexOf('.', file.name.length())), "");
     }
 
-    private static int getIcon(FSFile file) {
+    protected static int getIcon(FSFile file) {
         if(!file.name.contains(".")) return 0x1F4C4;
         return ICON_CACHE.getOrDefault(getMimeType(file), 0x1F4C4);
     }
 
-    private static String getDescription(FSFile file) {
+    protected static String getDescription(FSFile file) {
         if(!file.name.contains(".")) return "File";
         return DESCRIPTION_CACHE.getOrDefault(getMimeType(file), "File");
     }
