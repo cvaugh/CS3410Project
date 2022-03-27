@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class FSFile extends FileSystemObject {
-    public int startPosition;
     public byte[] data;
     public boolean writing = false;
     public Map<String, String> meta = new TreeMap<>();
@@ -22,9 +21,7 @@ public class FSFile extends FileSystemObject {
     public void write(byte[] data) throws IOException {
         this.data = data;
         writing = true;
-        startPosition = Main.fs.findIndexFor(this);
         writing = false;
-        Main.fs.writeContainer();
     }
 
     /**
@@ -34,7 +31,7 @@ public class FSFile extends FileSystemObject {
      * {@link FileSystem#writeContainer()} is called and its contents are nullified.
      */
     public void delete() {
-        startPosition = -1;
+        parent.children.remove(this);
         Arrays.fill(data, (byte) 0);
     }
 

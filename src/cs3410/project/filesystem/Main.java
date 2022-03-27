@@ -81,24 +81,12 @@ public class Main {
             }
 
             if(toCopy != null) {
-                if(toCopyDestination.contains("%s")) {
-                    toCopyDestination = String.format(toCopyDestination, toCopy.getName());
-                }
-                if(toCopyDestination.isEmpty()) {
-                    toCopyDestination = "/" + toCopy.getName();
-                }
-                String[] splitPath = toCopyDestination.split("/");
-                String targetName = splitPath[splitPath.length - 1];
-                FSDirectory parent = fs.createParents(fs.root, toCopyDestination);
-                if(fs.exists(toCopyDestination)) {
-                    System.err.println("File already exists at destination: " + toCopyDestination);
-                } else {
-                    FSFile target = fs.newFile(parent, targetName);
-                    try {
-                        target.write(Files.readAllBytes(toCopy.toPath()));
-                    } catch(IOException e) {
-                        e.printStackTrace();
+                try {
+                    if(!fs.importFile(toCopy, toCopyDestination)) {
+                        System.err.println("File already exists at destination: " + toCopyDestination);
                     }
+                } catch(IOException e) {
+                    e.printStackTrace();
                 }
             }
             if(!toExtract.isEmpty()) {

@@ -9,8 +9,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.SortedMap;
 import java.util.TreeMap;
+
+import cs3410.project.filesystem.gui.BrowserFrame;
 
 public class FileSystem {
     public final FSDirectory root = new FSDirectory(null, "");
@@ -23,7 +24,6 @@ public class FileSystem {
      */
     public File mftContainer;
     private byte[] lastIOHash;
-    private boolean writeChanges = true;
 
     public FileSystem(File container) {
         this.container = container;
@@ -147,7 +147,6 @@ public class FileSystem {
      * @throws IOException
      */
     public void writeContainer() throws IOException {
-        if(!writeChanges) return;
         byte[] data = getFullBytes();
         if(!hasChangedSinceLastIO(data)) return;
         Files.write(container.toPath(), data);
@@ -159,31 +158,33 @@ public class FileSystem {
     }
 
     private byte[] getFullBytes() {
-        SortedMap<Integer, FSFile> files = new TreeMap<>();
+        Map<FSFile, Integer> dataStartIndices = new HashMap<FSFile, Integer>();
+        ByteArrayOutputStream dataStream = new ByteArrayOutputStream();
         traverse(root, new FSAction() {
+            int index = 0;
+
             @Override
             public void run(FileSystemObject obj) {
                 if(!obj.isDirectory()) {
-                    files.put(((FSFile) obj).startPosition, (FSFile) obj);
+                    try {
+                        FSFile file = (FSFile) obj;
+                        dataStartIndices.put(file, index);
+                        dataStream.write(Utils.intToBytes(file.getTotalSize()));
+                        index += 4;
+                        if(file.data != null) {
+                            dataStream.write(file.data);
+                            index += file.getSize();
+                        }
+                    } catch(IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         });
-        int dataSize = 0;
-        for(int key : files.keySet()) {
-            dataSize += files.get(key).getTotalSize();
-        }
-        byte[] data = new byte[dataSize];
-        for(int key : files.keySet()) {
-            int index = files.get(key).startPosition;
-            System.arraycopy(Utils.intToBytes(files.get(key).getTotalSize()), 0, data, index, 4);
-            index += 4;
-            if(files.get(key).data != null) {
-                System.arraycopy(files.get(key).data, 0, data, index, files.get(key).data.length);
-                index += files.get(key).data.length;
-            }
-        }
+        byte[] data = dataStream.toByteArray();
+
         Map<FSFile, Integer> metaStartIndices = new HashMap<FSFile, Integer>();
-        ByteArrayOutputStream meta = new ByteArrayOutputStream();
+        ByteArrayOutputStream metaStream = new ByteArrayOutputStream();
         int metaIndex = 0;
         traverse(root, new FSAction() {
             @Override
@@ -193,50 +194,50 @@ public class FileSystem {
                     metaStartIndices.put((FSFile) obj, metaIndex);
                     Map<String, String> fileMeta = ((FSFile) obj).meta;
                     if(fileMeta.isEmpty()) {
-                        meta.write(Utils.intToBytes(Integer.MAX_VALUE));
+                        metaStream.write(Utils.intToBytes(Integer.MAX_VALUE));
                         return;
                     }
                     for(String key : fileMeta.keySet()) {
-                        meta.write(Utils.intToBytes(key.length()));
-                        meta.write(key.getBytes());
-                        meta.write(Utils.intToBytes(fileMeta.get(key).length()));
-                        meta.write(fileMeta.get(key).getBytes());
+                        metaStream.write(Utils.intToBytes(key.length()));
+                        metaStream.write(key.getBytes());
+                        metaStream.write(Utils.intToBytes(fileMeta.get(key).length()));
+                        metaStream.write(fileMeta.get(key).getBytes());
                     }
                 } catch(IOException e) {
                     e.printStackTrace();
                 }
             }
         });
-        byte[] metaBytes = meta.toByteArray();
+        byte[] meta = metaStream.toByteArray();
 
-        ByteArrayOutputStream mft = new ByteArrayOutputStream();
+        ByteArrayOutputStream mftStream = new ByteArrayOutputStream();
         traverse(root, new FSAction() {
             @Override
             public void run(FileSystemObject obj) {
                 if(obj.isRoot()) return;
                 try {
-                    mft.write(obj.isDirectory() ? (byte) 0x44 : (byte) 0x46);
+                    mftStream.write(obj.isDirectory() ? (byte) 0x44 : (byte) 0x46);
                     if(!obj.isDirectory()) {
-                        mft.write(Utils.intToBytes(((FSFile) obj).startPosition));
-                        mft.write(Utils.intToBytes(metaStartIndices.get(obj)));
-                        mft.write(Utils.intToBytes(((FSFile) obj).meta.size()));
+                        mftStream.write(Utils.intToBytes(dataStartIndices.get(obj)));
+                        mftStream.write(Utils.intToBytes(metaStartIndices.get(obj)));
+                        mftStream.write(Utils.intToBytes(((FSFile) obj).meta.size()));
                     }
-                    mft.write(Utils.intToBytes(obj.getPath().length()));
-                    mft.write(obj.getPath().getBytes());
+                    mftStream.write(Utils.intToBytes(obj.getPath().length()));
+                    mftStream.write(obj.getPath().getBytes());
                 } catch(IOException e) {
                     e.printStackTrace();
                 }
             }
         });
-        byte[] mftBytes = mft.toByteArray();
+        byte[] mft = mftStream.toByteArray();
 
-        byte[] output = new byte[data.length + mftBytes.length + metaBytes.length + 12];
-        System.arraycopy(Utils.intToBytes(mftBytes.length), 0, output, 0, 4);
-        System.arraycopy(mftBytes, 0, output, 4, mftBytes.length);
-        System.arraycopy(Utils.intToBytes(data.length), 0, output, mftBytes.length + 4, 4);
-        System.arraycopy(data, 0, output, mftBytes.length + 8, data.length);
-        System.arraycopy(Utils.intToBytes(metaBytes.length), 0, output, mftBytes.length + data.length + 8, 4);
-        System.arraycopy(metaBytes, 0, output, mftBytes.length + data.length + 8, data.length);
+        byte[] output = new byte[data.length + mft.length + meta.length + 12];
+        System.arraycopy(Utils.intToBytes(mft.length), 0, output, 0, 4);
+        System.arraycopy(Utils.intToBytes(data.length), 0, output, 4, 4);
+        System.arraycopy(Utils.intToBytes(meta.length), 0, output, 8, 4);
+        System.arraycopy(mft, 0, output, 12, mft.length);
+        System.arraycopy(data, 0, output, 12 + mft.length, data.length);
+        System.arraycopy(meta, 0, output, 12 + mft.length + data.length, meta.length);
         return output;
     }
 
@@ -246,7 +247,6 @@ public class FileSystem {
      * @throws IOException
      */
     public void readContainer() throws IOException {
-        writeChanges = false;
         byte[] full = Files.readAllBytes(container.toPath());
         try {
             lastIOHash = MessageDigest.getInstance("SHA-1").digest(full);
@@ -254,12 +254,11 @@ public class FileSystem {
             e.printStackTrace();
         }
         byte[] mft = new byte[Utils.bytesToInt(Arrays.copyOfRange(full, 0, 4))];
-        System.arraycopy(full, 4, mft, 0, mft.length);
-        byte[] data = new byte[Utils.bytesToInt(Arrays.copyOfRange(full, mft.length + 4, mft.length + 8))];
-        System.arraycopy(full, 4, mft, 0, mft.length);
-        byte[] meta = new byte[Utils
-                .bytesToInt(Arrays.copyOfRange(full, mft.length + data.length + 4, mft.length + data.length + 8))];
-        System.arraycopy(full, mft.length + data.length + 8, meta, 0, meta.length);
+        byte[] data = new byte[Utils.bytesToInt(Arrays.copyOfRange(full, 4, 8))];
+        byte[] meta = new byte[Utils.bytesToInt(Arrays.copyOfRange(full, 8, 12))];
+        System.arraycopy(full, 12, mft, 0, mft.length);
+        System.arraycopy(full, 12 + mft.length, data, 0, data.length);
+        System.arraycopy(full, 12 + mft.length + data.length, meta, 0, meta.length);
         for(int i = 0; i < mft.length; i++) {
             boolean isDirectory = mft[i] == (byte) 0x44;
             i++;
@@ -302,7 +301,6 @@ public class FileSystem {
             }
             i += pathSize - 1;
         }
-        writeChanges = true;
     }
 
     /**
@@ -395,41 +393,6 @@ public class FileSystem {
         return sb.toString();
     }
 
-    /**
-     * @param file The file for which to find a suitable index
-     * @return The starting index of the first instance of empty space within the
-     *         container that is large enough to hold the contents of <tt>file</tt>
-     */
-    public int findIndexFor(FSFile file) {
-        int totalSize = file.getTotalSize();
-        SortedMap<Integer, FSFile> files = new TreeMap<>();
-        traverse(root, new FSAction() {
-            @Override
-            public void run(FileSystemObject obj) {
-                if(!obj.isDirectory()) {
-                    FSFile f = (FSFile) obj;
-                    if(f.startPosition == -1) return;
-                    files.put(f.startPosition, f);
-                }
-            }
-        });
-        int prevEnd = 0;
-        for(int key : files.keySet()) {
-            if(files.get(key).writing) {
-                prevEnd = key;
-                continue;
-            }
-            if(key - prevEnd >= totalSize) {
-                return prevEnd;
-            }
-        }
-        totalSize = 0;
-        for(int key : files.keySet()) {
-            if(!files.get(key).writing) totalSize += files.get(key).getTotalSize();
-        }
-        return totalSize;
-    }
-
     public static void load(File container) throws IOException {
         if(container.isDirectory()) throw new RuntimeException("Container may not be a directory");
         Main.fs = new FileSystem(container);
@@ -442,6 +405,7 @@ public class FileSystem {
     }
 
     public boolean hasChangedSinceLastIO(byte[] currentData) {
+        if(lastIOHash == null) return true;
         byte[] currentHash;
         try {
             currentHash = MessageDigest.getInstance("SHA-1").digest(currentData);
@@ -453,5 +417,30 @@ public class FileSystem {
             if(currentHash[i] != lastIOHash[i]) return true;
         }
         return false;
+    }
+
+    public boolean importFile(File toImport, String destination) throws IOException {
+        if(destination.contains("%s")) {
+            destination = String.format(destination, toImport.getName());
+        }
+        if(destination.isEmpty()) {
+            destination = "/" + toImport.getName();
+        }
+        String[] splitPath = destination.split("/");
+        String targetName = splitPath[splitPath.length - 1];
+        FSDirectory parent = createParents(root, destination);
+        if(parent.getChild(splitPath[splitPath.length - 1]) != null) {
+            return false;
+        } else {
+            FSFile target = newFile(parent, targetName);
+            target.write(Files.readAllBytes(toImport.toPath()));
+            return true;
+        }
+    }
+
+    public boolean importFile(File toImport, String destination, BrowserFrame browser) throws IOException {
+        boolean r = importFile(toImport, destination);
+        browser.update(browser.currentRoot);
+        return r;
     }
 }
