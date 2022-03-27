@@ -5,11 +5,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 import cs3410.project.filesystem.gui.BrowserFrame;
-import cs3410.project.filesystem.gui.ControlFrame;
 
 public class Main {
     public static FileSystem fs;
-    public static boolean isControlFrameOpen = false;
 
     public static void main(String[] args) {
         File container = null;
@@ -17,7 +15,7 @@ public class Main {
         String toCopyDestination = "";
         String toExtract = "";
         String toExtractDestination = "";
-        boolean forceExtract = false, browser = false, printBeforeExit = false;
+        boolean forceExtract = false, printBeforeExit = false;
         if(args.length > 0) {
             // Parse command line arguments
             // TODO parse arguments in a more standard way
@@ -58,10 +56,6 @@ public class Main {
                     if(args[i].equals("-f")) {
                         forceExtract = true;
                     }
-                    // Open a file browser GUI
-                    if(args[i].equals("-b")) {
-                        browser = true;
-                    }
                     // Print the file system before exiting
                     if(args[i].equals("-p")) {
                         printBeforeExit = true;
@@ -77,9 +71,8 @@ public class Main {
         }
 
         if(args.length == 0) {
-            ControlFrame controlFrame = new ControlFrame();
-            controlFrame.setVisible(true);
-            isControlFrameOpen = true;
+            BrowserFrame browser = new BrowserFrame();
+            browser.setVisible(true);
         } else if(container != null) {
             try {
                 FileSystem.load(container);
@@ -131,15 +124,10 @@ public class Main {
                     }
                 }
             }
-            if(browser) {
-                BrowserFrame browserFrame = new BrowserFrame();
-                browserFrame.setVisible(true);
-            } else {
-                try {
-                    fs.writeContainer();
-                } catch(IOException e) {
-                    e.printStackTrace();
-                }
+            try {
+                fs.writeContainer();
+            } catch(IOException e) {
+                e.printStackTrace();
             }
             if(printBeforeExit) {
                 System.out.println(fs.getTreeAsString(fs.root, true));
