@@ -1,7 +1,12 @@
 package cs3410.project.filesystem.gui;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Insets;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -14,9 +19,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -64,77 +73,121 @@ public class BrowserFrame extends JFrame {
                 if(!Main.isControlFrameOpen) System.exit(0);
             }
         });
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                sidebar.setMaximumSize(new Dimension(getWidth() / 4, Integer.MAX_VALUE));
+                scrollPane.setMaximumSize(new Dimension((getWidth() / 4) * 3, Integer.MAX_VALUE));
+                // revalidate() is necessary here due to a bug in the Windows implementation of
+                // Swing when maximizing a JFrame
+                sidebar.revalidate();
+                scrollPane.revalidate();
+            }
+        });
         this.getContentPane().setLayout(new BoxLayout(this.getContentPane(), BoxLayout.X_AXIS));
+        JMenuBar menuBar = new JMenuBar();
+        JMenu fileMenu = new JMenu("File");
+        fileMenu.setMnemonic(KeyEvent.VK_F);
+        JMenuItem menuItem = new JMenuItem("New File");
+        menuItem.setMnemonic(KeyEvent.VK_F);
+        menuItem.addActionListener(e -> {
+            newFile();
+        });
+        fileMenu.add(menuItem);
+        menuItem = new JMenuItem("New Directory");
+        menuItem.setMnemonic(KeyEvent.VK_D);
+        menuItem.addActionListener(e -> {
+            newDirectory();
+        });
+        fileMenu.add(menuItem);
+        menuItem = new JMenuItem("Delete Selected");
+        menuItem.setMnemonic(KeyEvent.VK_R);
+        menuItem.addActionListener(e -> {
+            deleteSelected();
+        });
+        fileMenu.add(menuItem);
+        fileMenu.addSeparator();
+        menuItem = new JMenuItem("Exit");
+        menuItem.setMnemonic(KeyEvent.VK_X);
+        menuItem.addActionListener(e -> {
+            BrowserFrame.this.dispatchEvent(new WindowEvent(BrowserFrame.this, WindowEvent.WINDOW_CLOSING));
+        });
+        fileMenu.add(menuItem);
+        menuBar.add(fileMenu);
+        JMenu viewMenu = new JMenu("View");
+        menuItem = new JMenuItem("Increase Font Size");
+        menuItem.setMnemonic(KeyEvent.VK_I);
+        menuItem.addActionListener(e -> {
+            updateFontSize(2);
+        });
+        viewMenu.add(menuItem);
+        menuItem = new JMenuItem("Decrease Font Size");
+        menuItem.setMnemonic(KeyEvent.VK_D);
+        menuItem.addActionListener(e -> {
+            updateFontSize(-2);
+        });
+        viewMenu.add(menuItem);
+        viewMenu.setMnemonic(KeyEvent.VK_V);
+        menuBar.add(viewMenu);
+        JMenu toolsMenu = new JMenu("Tools");
+        toolsMenu.setMnemonic(KeyEvent.VK_T);
+        menuItem = new JMenuItem("Search");
+        menuItem.setMnemonic(KeyEvent.VK_S);
+        menuItem.addActionListener(e -> {
+            openSearch();
+        });
+        toolsMenu.add(menuItem);
+        menuItem = new JMenuItem("Graphical Tree");
+        menuItem.setMnemonic(KeyEvent.VK_T);
+        menuItem.addActionListener(e -> {
+            showTree();
+        });
+        toolsMenu.add(menuItem);
+        menuBar.add(toolsMenu);
+        setJMenuBar(menuBar);
         sidebar.setPreferredSize(new Dimension(200, 800));
+        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
         sidebar.setFont(table.getFont());
+        sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
         JButton newFile = new JButton("Create File");
-        newFile.setPreferredSize(new Dimension(180, 20));
         newFile.addActionListener(e -> {
-            String name = JOptionPane.showInputDialog("Enter a name for the file:");
-            if(name == null || name.isBlank()) return;
-            name = name.trim();
-            if(currentRoot.getChild(name) != null) {
-                JOptionPane.showMessageDialog(this,
-                        String.format("An object with the name \"%s\" already exists", name), "Failed to create file",
-                        JOptionPane.ERROR_MESSAGE);
-            } else {
-                currentRoot.children.add(new FSFile(currentRoot, name));
-                update(currentRoot);
-            }
+            newFile();
         });
+        newFile.setAlignmentX(Component.CENTER_ALIGNMENT);
         sidebar.add(newFile);
+        sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
         JButton newDirectory = new JButton("Create Directory");
-        newDirectory.setPreferredSize(newFile.getPreferredSize());
         newDirectory.addActionListener(e -> {
-            String name = JOptionPane.showInputDialog("Enter a name for the directory:");
-            if(name == null || name.isBlank()) return;
-            name = name.trim();
-            if(currentRoot.getChild(name) != null) {
-                JOptionPane.showMessageDialog(this,
-                        String.format("An object with the name \"%s\" already exists", name),
-                        "Failed to create directory", JOptionPane.ERROR_MESSAGE);
-            } else {
-                currentRoot.children.add(new FSDirectory(currentRoot, name.trim()));
-                update(currentRoot);
-            }
+            newDirectory();
         });
+        newDirectory.setAlignmentX(Component.CENTER_ALIGNMENT);
         sidebar.add(newDirectory);
-        deleteSelected.setPreferredSize(newFile.getPreferredSize());
+        sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
         deleteSelected.setEnabled(false);
         deleteSelected.addActionListener(e -> {
-            List<FileSystemObject> toRemove = new ArrayList<>();
-            for(int row : table.getSelectedRows()) {
-                if(row == 0 && currentRoot.isRoot()) continue;
-                toRemove.add(currentRoot.children.get(row - (currentRoot.isRoot() ? 0 : 1)));
-            }
-            currentRoot.children.removeAll(toRemove);
-            update(currentRoot);
+            deleteSelected();
         });
+        deleteSelected.setAlignmentX(Component.CENTER_ALIGNMENT);
         sidebar.add(deleteSelected);
-        search.setPreferredSize(newFile.getPreferredSize());
+        sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
         search.addActionListener(e -> {
-            SearchFrame searchFrame = new SearchFrame(this);
-            searchFrame.setVisible(true);
+            openSearch();
         });
+        search.setAlignmentX(Component.CENTER_ALIGNMENT);
         sidebar.add(search);
         add(sidebar);
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
                 if(e.getButton() == MouseEvent.BUTTON3) {
-                    // TODO context menu
+                    new BrowserContextMenu(BrowserFrame.this).show(e.getComponent(), e.getX(), e.getY());
                 } else if(e.getClickCount() == 2) {
                     int row = table.rowAtPoint(e.getPoint());
                     if(row == 0 && !currentRoot.isRoot()) {
                         update(currentRoot.parent);
                         return;
                     }
-                    FileSystemObject obj = currentRoot.children.get(row - (currentRoot.isRoot() ? 0 : 1));
-                    if(obj.isDirectory()) {
-                        update((FSDirectory) obj);
-                    } else {
-                        // TODO open file
-                    }
+                    open(getObjectAtRowIndex(row));
                 }
                 updateButtons();
             }
@@ -147,6 +200,62 @@ public class BrowserFrame extends JFrame {
         setLocationRelativeTo(null);
         update(Main.fs.root);
         table.setRowHeight(table.getRowHeight() + 4);
+        updateFontSize(0);
+    }
+
+    private void newFile() {
+        String name = JOptionPane.showInputDialog("Enter a name for the file:");
+        if(name == null || name.isBlank()) return;
+        name = name.trim();
+        if(currentRoot.getChild(name) != null) {
+            JOptionPane.showMessageDialog(this, String.format("An object with the name \"%s\" already exists", name),
+                    "Failed to create file", JOptionPane.ERROR_MESSAGE);
+        } else {
+            currentRoot.children.add(new FSFile(currentRoot, name));
+            update(currentRoot);
+        }
+    }
+
+    private void newDirectory() {
+        String name = JOptionPane.showInputDialog("Enter a name for the directory:");
+        if(name == null || name.isBlank()) return;
+        name = name.trim();
+        if(currentRoot.getChild(name) != null) {
+            JOptionPane.showMessageDialog(this, String.format("An object with the name \"%s\" already exists", name),
+                    "Failed to create directory", JOptionPane.ERROR_MESSAGE);
+        } else {
+            currentRoot.children.add(new FSDirectory(currentRoot, name.trim()));
+            update(currentRoot);
+        }
+    }
+
+    private void deleteSelected() {
+        List<FileSystemObject> toRemove = new ArrayList<>();
+        for(int row : table.getSelectedRows()) {
+            if(row == 0 && currentRoot.isRoot()) continue;
+            toRemove.add(currentRoot.children.get(row - (currentRoot.isRoot() ? 0 : 1)));
+        }
+        currentRoot.children.removeAll(toRemove);
+        update(currentRoot);
+    }
+
+    private void openSearch() {
+        SearchFrame searchFrame = new SearchFrame(this);
+        searchFrame.setVisible(true);
+    }
+
+    private void showTree() {
+        // TODO
+        JOptionPane.showMessageDialog(this, "This operation has not yet been implemented", "Unimplemented",
+                JOptionPane.WARNING_MESSAGE);
+    }
+
+    public void open(FileSystemObject obj) {
+        if(obj.isDirectory()) {
+            update((FSDirectory) obj);
+        } else {
+            // TODO open files
+        }
     }
 
     protected void update(FSDirectory root) {
@@ -177,7 +286,7 @@ public class BrowserFrame extends JFrame {
                         return "";
                     }
                 } else {
-                    FileSystemObject obj = root.children.get(rowIndex - (root.isRoot() ? 0 : 1));
+                    FileSystemObject obj = getObjectAtRowIndex(rowIndex);
                     switch(columnIndex) {
                     case 0:
                         return String.format("%c %s", obj.isDirectory() ? 0x1F4C1 : getIcon((FSFile) obj), obj.name);
@@ -204,9 +313,26 @@ public class BrowserFrame extends JFrame {
         table.getColumnModel().getColumn(2).setPreferredWidth(100);
     }
 
+    protected FileSystemObject getObjectAtRowIndex(int index) {
+        return currentRoot.children.get(index - (currentRoot.isRoot() ? 0 : 1));
+    }
+
     protected void updateButtons() {
         deleteSelected.setEnabled(table.getSelectedRowCount() > 0
                 && (table.getRowCount() == 1 || (table.getRowCount() > 1 && table.getSelectedRow() != 0)));
+    }
+
+    private void updateFontSize(int delta) {
+        if(delta < 0 && table.getFont().getSize() <= 2) return;
+        if(delta > 0 && table.getFont().getSize() >= 100) return;
+        Font fontPlain = new Font(table.getFont().getName(), Font.PLAIN, table.getFont().getSize() + delta);
+        Font fontBold = new Font(table.getFont().getName(), Font.BOLD, table.getFont().getSize() + delta);
+        for(Component c : sidebar.getComponents()) {
+            c.setFont(fontBold);
+            if(c instanceof JButton) ((JButton) c).setMargin(new Insets(2, 5, 2, 5));
+        }
+        table.setFont(fontPlain);
+        table.setRowHeight(table.getRowHeight() + delta);
     }
 
     protected static String getMimeType(FSFile file) {

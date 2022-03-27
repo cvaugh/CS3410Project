@@ -151,7 +151,7 @@ public class FileSet implements Collection<FileSystemObject> {
         objects = new FileSystemObject[0];
     }
 
-    private void sort() {
+    public void sort() {
         FileSystemObject[] temp = new FileSystemObject[objects.length];
         int i = 0;
         for(int j = 0; j < objects.length; j++) {

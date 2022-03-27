@@ -27,6 +27,7 @@ public class ControlFrame extends JFrame {
     private final JButton exportFile = new JButton("Export File");
     private final JButton openBrowser = new JButton("Open File System Browser");
 
+    // TODO consolidate BrowserFrame and ControlFrame
     public ControlFrame() {
         FILE_CHOOSER.setCurrentDirectory(new File("."));
         setTitle("File System Container Manager");

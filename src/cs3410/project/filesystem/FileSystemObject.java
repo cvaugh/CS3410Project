@@ -25,6 +25,12 @@ public abstract class FileSystemObject implements Comparable<FileSystemObject> {
         return sb.toString();
     }
 
+    public void rename(String newName) {
+        if(name.equals(newName)) return;
+        this.name = newName;
+        parent.children.sort();
+    }
+
     /**
      * @return Whether this object is orphaned from the file system.
      */
