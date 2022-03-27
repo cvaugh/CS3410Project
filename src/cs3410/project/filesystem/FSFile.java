@@ -27,10 +27,6 @@ public class FSFile extends FileSystemObject {
         Main.fs.writeContainer();
     }
 
-    public void read() {
-        // TODO only read files as needed, rather than keeping everything in memory
-    }
-
     /**
      * Marks the file for deletion.
      * <br>
