@@ -55,6 +55,8 @@ public class BrowserFrame extends JFrame {
     private final JMenu viewMenu = new JMenu("View");
     private final JMenu toolsMenu = new JMenu("Tools");
     private final JMenu containerMenu = new JMenu("Container");
+    private final JMenuItem importFile = new JMenuItem("Import File");
+    private final JMenuItem exportFile = new JMenuItem("Export File");
     private final JButton newFile = new JButton("Create File");
     private final JButton newDirectory = new JButton("Create Directory");
     private final JButton deleteSelected = new JButton("Delete Selected");
@@ -73,10 +75,12 @@ public class BrowserFrame extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                try {
-                    Main.fs.writeContainer();
-                } catch(IOException ex) {
-                    ex.printStackTrace();
+                if(Main.fs != null) {
+                    try {
+                        Main.fs.writeContainer();
+                    } catch(IOException ex) {
+                        ex.printStackTrace();
+                    }
                 }
                 BrowserFrame.this.setVisible(false);
                 BrowserFrame.this.dispose();
@@ -190,24 +194,33 @@ public class BrowserFrame extends JFrame {
             }
         });
         containerMenu.add(menuItem);
-        menuItem = new JMenuItem("Import File");
-        menuItem.setMnemonic(KeyEvent.VK_I);
-        menuItem.addActionListener(e -> {
+        importFile.setEnabled(false);
+        importFile.setMnemonic(KeyEvent.VK_I);
+        importFile.addActionListener(e -> {
             FILE_CHOOSER.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
             int rt = FILE_CHOOSER.showOpenDialog(this);
             if(rt == JFileChooser.APPROVE_OPTION) {
-                JOptionPane.showMessageDialog(this, "This operation has not yet been implemented", "Unimplemented",
-                        JOptionPane.WARNING_MESSAGE);
+                try {
+                    if(!Main.fs.importFile(FILE_CHOOSER.getSelectedFile(),
+                            currentRoot.getPath() + "/" + FILE_CHOOSER.getSelectedFile().getName(), this)) {
+                        JOptionPane.showMessageDialog(this, String.format("An internal file with the name \"%s\"",
+                                FILE_CHOOSER.getSelectedFile().getName()), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch(IOException e1) {
+                    e1.printStackTrace();
+                    JOptionPane.showMessageDialog(this, String.format("An exception occurred while importing \"%s\"",
+                            FILE_CHOOSER.getSelectedFile().getName()), "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
-        containerMenu.add(menuItem);
-        menuItem = new JMenuItem("Export File");
-        menuItem.setMnemonic(KeyEvent.VK_E);
-        menuItem.addActionListener(e -> {
+        containerMenu.add(importFile);
+        exportFile.setEnabled(false);
+        exportFile.setMnemonic(KeyEvent.VK_E);
+        exportFile.addActionListener(e -> {
             JOptionPane.showMessageDialog(this, "This operation has not yet been implemented", "Unimplemented",
                     JOptionPane.WARNING_MESSAGE);
         });
-        containerMenu.add(menuItem);
+        containerMenu.add(exportFile);
         menuBar.add(containerMenu);
         setJMenuBar(menuBar);
         sidebar.setPreferredSize(new Dimension(200, 800));
@@ -297,7 +310,7 @@ public class BrowserFrame extends JFrame {
     private void deleteSelected() {
         List<FileSystemObject> toRemove = new ArrayList<>();
         for(int row : table.getSelectedRows()) {
-            if(row == 0 && currentRoot.isRoot()) continue;
+            if(row == 0 && !currentRoot.isRoot()) continue;
             toRemove.add(currentRoot.children.get(row - (currentRoot.isRoot() ? 0 : 1)));
         }
         currentRoot.children.removeAll(toRemove);
@@ -323,7 +336,7 @@ public class BrowserFrame extends JFrame {
         }
     }
 
-    protected void update(FSDirectory root) {
+    public void update(FSDirectory root) {
         currentRoot = root;
         setTitle(Main.fs.container.getName() + " > " + currentRoot);
         table.setModel(new AbstractTableModel() {
@@ -388,13 +401,15 @@ public class BrowserFrame extends JFrame {
         newFile.setEnabled(true);
         newDirectory.setEnabled(true);
         search.setEnabled(true);
+        importFile.setEnabled(true);
+        exportFile.setEnabled(true);
         setTitle(Main.fs.container.getName());
         update(Main.fs.root);
     }
 
     protected void updateButtons() {
-        deleteSelected.setEnabled(table.getSelectedRowCount() > 0
-                && (table.getRowCount() == 1 || (table.getRowCount() > 1 && table.getSelectedRow() != 0)));
+        deleteSelected.setEnabled(table.getSelectedRowCount() > 0 && (currentRoot.isRoot()
+                || (!currentRoot.isRoot() && (table.getRowCount() > 1 && table.getSelectedRow() != 0))));
     }
 
     private void updateFontSize(int delta) {
