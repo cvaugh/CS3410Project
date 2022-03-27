@@ -142,7 +142,7 @@ public class Main {
                 }
             }
             if(printBeforeExit) {
-                fs.getTreeAsString(fs.root, true);
+                System.out.println(fs.getTreeAsString(fs.root, true));
             }
         } else {
             System.err.println("Container path must be specified with -i");

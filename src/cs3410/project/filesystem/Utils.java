@@ -59,11 +59,6 @@ public class Utils {
         }
     }
 
-    public static byte[] sha1(byte[] data) {
-        // TODO: test if FS has changed before saving
-        return null;
-    }
-
     public static byte[] compress(byte[] data) {
         // TODO: compress data before saving
         return data;

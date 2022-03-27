@@ -4,6 +4,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +22,8 @@ public class FileSystem {
      * This file stores the structure of the file system
      */
     public File mftContainer;
+    private byte[] lastIOHash;
+    private boolean writeChanges = true;
 
     public FileSystem(File container) {
         this.container = container;
@@ -143,6 +147,18 @@ public class FileSystem {
      * @throws IOException
      */
     public void writeContainer() throws IOException {
+        if(!writeChanges) return;
+        byte[] data = getFullBytes();
+        if(!hasChangedSinceLastIO(data)) return;
+        Files.write(container.toPath(), data);
+        try {
+            lastIOHash = MessageDigest.getInstance("SHA-1").digest(data);
+        } catch(NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private byte[] getFullBytes() {
         SortedMap<Integer, FSFile> files = new TreeMap<>();
         traverse(root, new FSAction() {
             @Override
@@ -221,8 +237,7 @@ public class FileSystem {
         System.arraycopy(data, 0, output, mftBytes.length + 8, data.length);
         System.arraycopy(Utils.intToBytes(metaBytes.length), 0, output, mftBytes.length + data.length + 8, 4);
         System.arraycopy(metaBytes, 0, output, mftBytes.length + data.length + 8, data.length);
-
-        Files.write(container.toPath(), output);
+        return output;
     }
 
     /**
@@ -231,7 +246,13 @@ public class FileSystem {
      * @throws IOException
      */
     public void readContainer() throws IOException {
+        writeChanges = false;
         byte[] full = Files.readAllBytes(container.toPath());
+        try {
+            lastIOHash = MessageDigest.getInstance("SHA-1").digest(full);
+        } catch(NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
         byte[] mft = new byte[Utils.bytesToInt(Arrays.copyOfRange(full, 0, 4))];
         System.arraycopy(full, 4, mft, 0, mft.length);
         byte[] data = new byte[Utils.bytesToInt(Arrays.copyOfRange(full, mft.length + 4, mft.length + 8))];
@@ -281,6 +302,7 @@ public class FileSystem {
             }
             i += pathSize - 1;
         }
+        writeChanges = true;
     }
 
     /**
@@ -364,13 +386,13 @@ public class FileSystem {
 
     /**
      * @param root The <tt>FSDirectory</tt> from which to start the traversal
-     * @param utf8 If true, the tree is printed using box drawing characters.
+     * @param utf8 If true, the tree is created using box drawing characters.
      *             Otherwise, ASCII characters (<tt>|+-</tt>) are used.
      */
-    public void getTreeAsString(FSDirectory root, boolean utf8) {
+    public String getTreeAsString(FSDirectory root, boolean utf8) {
         StringBuilder sb = new StringBuilder();
         getTreeAsString(root, 0, 0, sb, utf8);
-        System.out.println(sb);
+        return sb.toString();
     }
 
     /**
@@ -417,5 +439,19 @@ public class FileSystem {
             Main.fs.container.createNewFile();
             Main.fs.mftContainer.createNewFile();
         }
+    }
+
+    public boolean hasChangedSinceLastIO(byte[] currentData) {
+        byte[] currentHash;
+        try {
+            currentHash = MessageDigest.getInstance("SHA-1").digest(currentData);
+        } catch(NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return true;
+        }
+        for(int i = 0; i < currentHash.length; i++) {
+            if(currentHash[i] != lastIOHash[i]) return true;
+        }
+        return false;
     }
 }
