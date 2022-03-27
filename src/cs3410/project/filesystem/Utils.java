@@ -58,4 +58,14 @@ public class Utils {
             return String.format("%s %sB", SIZE_FORMAT.format(b), "kMGTPEZY".charAt(magnitude - 1));
         }
     }
+
+    public static byte[] sha1(byte[] data) {
+        // TODO: test if FS has changed before saving
+        return null;
+    }
+
+    public static byte[] compress(byte[] data) {
+        // TODO: compress data before saving
+        return data;
+    }
 }
