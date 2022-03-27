@@ -58,9 +58,4 @@ public class Utils {
             return String.format("%s %sB", SIZE_FORMAT.format(b), "kMGTPEZY".charAt(magnitude - 1));
         }
     }
-
-    public static byte[] compress(byte[] data) {
-        // TODO: compress data before saving
-        return data;
-    }
 }
