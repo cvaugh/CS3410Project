@@ -8,9 +8,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.regex.PatternSyntaxException;
 
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -35,7 +35,6 @@ public class SearchFrame extends JFrame {
     private final JCheckBox matchCase = new JCheckBox("Match Case");
     private final JCheckBox matchExact = new JCheckBox("Exact Matches Only");
     private final JCheckBox useRegex = new JCheckBox("Regular Expression");
-    private final JButton search = new JButton("Search");
     private FileSystemObject[] results;
 
     public SearchFrame(BrowserFrame browser) {
@@ -55,35 +54,29 @@ public class SearchFrame extends JFrame {
         });
         query.addKeyListener(new KeyAdapter() {
             @Override
-            public void keyPressed(KeyEvent e) {
-                search.setEnabled(!query.getText().isEmpty());
-            }
-
-            @Override
             public void keyReleased(KeyEvent e) {
-                search.setEnabled(!query.getText().isEmpty());
+                search();
             }
         });
         sidebar.add(query);
         matchCase.setPreferredSize(new Dimension(180, 20));
+        matchCase.addChangeListener(e -> {
+            search();
+        });
         sidebar.add(matchCase);
         matchExact.setPreferredSize(matchCase.getPreferredSize());
         matchExact.addChangeListener(e -> {
             matchCase.setEnabled(!matchExact.isSelected() && !useRegex.isSelected());
+            search();
         });
         sidebar.add(matchExact);
         useRegex.setPreferredSize(matchCase.getPreferredSize());
         useRegex.addChangeListener(e -> {
             matchCase.setEnabled(!useRegex.isSelected() && !matchExact.isSelected());
             matchExact.setEnabled(!useRegex.isSelected());
-        });
-        sidebar.add(useRegex);
-        search.setPreferredSize(new Dimension(180, 20));
-        search.setEnabled(false);
-        search.addActionListener(e -> {
             search();
         });
-        sidebar.add(search);
+        sidebar.add(useRegex);
         add(sidebar);
         table.addMouseListener(new MouseAdapter() {
             @Override
@@ -110,17 +103,21 @@ public class SearchFrame extends JFrame {
 
     private void search() {
         FileSet found = new FileSet();
-        Main.fs.traverse(Main.fs.root, obj -> {
-            if(useRegex.isSelected()) {
-                if(obj.name.matches(query.getText())) found.add(obj);
-            } else if(matchExact.isSelected()) {
-                if(obj.name.equals(query.getText())) found.add(obj);
-            } else if(matchCase.isSelected()) {
-                if(obj.name.contains(query.getText())) found.add(obj);
-            } else {
-                if(obj.name.toLowerCase().contains(query.getText().toLowerCase())) found.add(obj);
-            }
-        });
+        if(!query.getText().isBlank()) {
+            Main.fs.traverse(Main.fs.root, obj -> {
+                if(useRegex.isSelected()) {
+                    try {
+                        if(obj.name.matches(query.getText())) found.add(obj);
+                    } catch(PatternSyntaxException ignore) {}
+                } else if(matchExact.isSelected()) {
+                    if(obj.name.equals(query.getText())) found.add(obj);
+                } else if(matchCase.isSelected()) {
+                    if(obj.name.contains(query.getText())) found.add(obj);
+                } else {
+                    if(obj.name.toLowerCase().contains(query.getText().toLowerCase())) found.add(obj);
+                }
+            });
+        }
         results = new FileSystemObject[found.size()];
         for(int i = 0; i < results.length; i++)
             results[i] = found.get(i);
