@@ -45,7 +45,7 @@ import cs3410.project.filesystem.Utils;
 public class BrowserFrame extends JFrame {
     private static final long serialVersionUID = -6275492324105494374L;
 
-    private static final JFileChooser FILE_CHOOSER = new JFileChooser();
+    protected static final JFileChooser FILE_CHOOSER = new JFileChooser();
     private static final FileFilter FS_FILTER = new FileFilter() {
         @Override
         public boolean accept(File f) {
@@ -70,18 +70,17 @@ public class BrowserFrame extends JFrame {
     private final JMenu toolsMenu = new JMenu("Tools");
     private final JMenu containerMenu = new JMenu("Container");
     private final JMenuItem importFile = new JMenuItem("Import File");
-    private final JMenuItem exportFile = new JMenuItem("Export File");
     private final JButton newFile = new JButton("Create File");
     private final JButton newDirectory = new JButton("Create Directory");
     private final JButton deleteSelected = new JButton("Delete Selected");
     private final JButton search = new JButton("Search");
     public FSDirectory currentRoot;
-    private FileFilter defaultFilter;
+    protected FileFilter defaultFileFilter;
 
     public BrowserFrame() {
         if(!TEMP_DIR.exists()) TEMP_DIR.mkdirs();
         TEMP_DIR.deleteOnExit();
-        defaultFilter = FILE_CHOOSER.getFileFilter();
+        defaultFileFilter = FILE_CHOOSER.getFileFilter();
         FILE_CHOOSER.setCurrentDirectory(new File("."));
         try {
             loadMetadata();
@@ -218,7 +217,7 @@ public class BrowserFrame extends JFrame {
         importFile.setMnemonic(KeyEvent.VK_I);
         importFile.addActionListener(e -> {
             FILE_CHOOSER.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-            FILE_CHOOSER.setFileFilter(defaultFilter);
+            FILE_CHOOSER.setFileFilter(defaultFileFilter);
             int rt = FILE_CHOOSER.showOpenDialog(this);
             if(rt == JFileChooser.APPROVE_OPTION) {
                 try {
@@ -235,15 +234,6 @@ public class BrowserFrame extends JFrame {
             }
         });
         containerMenu.add(importFile);
-        exportFile.setEnabled(false);
-        exportFile.setMnemonic(KeyEvent.VK_E);
-        exportFile.addActionListener(e -> {
-            FILE_CHOOSER.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            FILE_CHOOSER.setFileFilter(defaultFilter);
-            JOptionPane.showMessageDialog(this, "This operation has not yet been implemented", "Unimplemented",
-                    JOptionPane.WARNING_MESSAGE);
-        });
-        containerMenu.add(exportFile);
         menuBar.add(containerMenu);
         setJMenuBar(menuBar);
         sidebar.setPreferredSize(new Dimension(200, 800));
@@ -330,13 +320,12 @@ public class BrowserFrame extends JFrame {
         }
     }
 
-    private void deleteSelected() {
+    protected void deleteSelected() {
         List<FileSystemObject> toRemove = new ArrayList<>();
         for(int row : table.getSelectedRows()) {
             if(row == 0 && !currentRoot.isRoot()) continue;
             toRemove.add(currentRoot.children.get(row - (currentRoot.isRoot() ? 0 : 1)));
         }
-        System.out.println(toRemove);
         currentRoot.children.removeAll(toRemove);
         update(currentRoot);
     }
@@ -437,7 +426,6 @@ public class BrowserFrame extends JFrame {
         newDirectory.setEnabled(true);
         search.setEnabled(true);
         importFile.setEnabled(true);
-        exportFile.setEnabled(true);
         setTitle(Main.fs.container.getName());
         update(Main.fs.root);
     }
