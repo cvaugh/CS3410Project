@@ -313,6 +313,7 @@ public class BrowserFrame extends JFrame {
             if(row == 0 && !currentRoot.isRoot()) continue;
             toRemove.add(currentRoot.children.get(row - (currentRoot.isRoot() ? 0 : 1)));
         }
+        System.out.println(toRemove);
         currentRoot.children.removeAll(toRemove);
         update(currentRoot);
     }

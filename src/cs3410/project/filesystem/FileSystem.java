@@ -201,11 +201,11 @@ public class FileSystem {
         });
         byte[] mft = mftStream.toByteArray();
 
-        byte[] output = new byte[data.length + mft.length + 12];
+        byte[] output = new byte[data.length + mft.length + 8];
         System.arraycopy(Utils.intToBytes(mft.length), 0, output, 0, 4);
         System.arraycopy(Utils.intToBytes(data.length), 0, output, 4, 4);
-        System.arraycopy(mft, 0, output, 12, mft.length);
-        System.arraycopy(data, 0, output, 12 + mft.length, data.length);
+        System.arraycopy(mft, 0, output, 8, mft.length);
+        System.arraycopy(data, 0, output, 8 + mft.length, data.length);
         return output;
     }
 
@@ -223,6 +223,8 @@ public class FileSystem {
         }
         byte[] mft = new byte[Utils.bytesToInt(Arrays.copyOfRange(full, 0, 4))];
         byte[] data = new byte[Utils.bytesToInt(Arrays.copyOfRange(full, 4, 8))];
+        System.arraycopy(full, 8, mft, 0, mft.length);
+        System.arraycopy(full, 8 + mft.length, data, 0, data.length);
         for(int i = 0; i < mft.length; i++) {
             boolean isDirectory = mft[i] == (byte) 0x44;
             i++;
