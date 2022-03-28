@@ -393,4 +393,10 @@ public class FileSystem {
         browser.update(browser.currentRoot);
         return r;
     }
+
+    public boolean exportFile(FSFile toExport, File destination, boolean overwrite) throws IOException {
+        if((destination.exists() && !overwrite) || destination.isDirectory()) return false;
+        Files.write(destination.toPath(), toExport.data);
+        return true;
+    }
 }

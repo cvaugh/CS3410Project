@@ -1,6 +1,7 @@
 package cs3410.project.filesystem.gui;
 
 import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
@@ -56,6 +57,7 @@ public class BrowserFrame extends JFrame {
             return "File System Containers (.fs)";
         }
     };
+    private static final File TEMP_DIR = new File(System.getProperty("java.io.tmpdir") + File.separator + "fstemp");
     private static final Map<String, String> MIME_CACHE = new HashMap<>();
     private static final Map<String, String> DESCRIPTION_CACHE = new HashMap<>();
     private static final Map<String, Integer> ICON_CACHE = new HashMap<>();
@@ -77,6 +79,8 @@ public class BrowserFrame extends JFrame {
     private FileFilter defaultFilter;
 
     public BrowserFrame() {
+        if(!TEMP_DIR.exists()) TEMP_DIR.mkdirs();
+        TEMP_DIR.deleteOnExit();
         defaultFilter = FILE_CHOOSER.getFileFilter();
         FILE_CHOOSER.setCurrentDirectory(new File("."));
         try {
@@ -352,7 +356,18 @@ public class BrowserFrame extends JFrame {
         if(obj.isDirectory()) {
             update((FSDirectory) obj);
         } else {
-            // TODO open files
+            try {
+                File out = new File(TEMP_DIR, obj.name);
+                if(Main.fs.exportFile((FSFile) obj, out, true)) {
+                    Desktop.getDesktop().open(out);
+                    out.deleteOnExit();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to export file", "Failed to export file",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
