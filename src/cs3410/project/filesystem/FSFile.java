@@ -2,13 +2,10 @@ package cs3410.project.filesystem;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.TreeMap;
 
 public class FSFile extends FileSystemObject {
     public byte[] data;
     public boolean writing = false;
-    public Map<String, String> meta = new TreeMap<>();
 
     public FSFile(FSDirectory parent, String name) {
         super(parent, name);

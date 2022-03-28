@@ -9,7 +9,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 import cs3410.project.filesystem.gui.BrowserFrame;
 
@@ -183,33 +182,6 @@ public class FileSystem {
         });
         byte[] data = dataStream.toByteArray();
 
-        Map<FSFile, Integer> metaStartIndices = new HashMap<FSFile, Integer>();
-        ByteArrayOutputStream metaStream = new ByteArrayOutputStream();
-        int metaIndex = 0;
-        traverse(root, new FSAction() {
-            @Override
-            public void run(FileSystemObject obj) {
-                if(obj.isDirectory()) return;
-                try {
-                    metaStartIndices.put((FSFile) obj, metaIndex);
-                    Map<String, String> fileMeta = ((FSFile) obj).meta;
-                    if(fileMeta.isEmpty()) {
-                        metaStream.write(Utils.intToBytes(Integer.MAX_VALUE));
-                        return;
-                    }
-                    for(String key : fileMeta.keySet()) {
-                        metaStream.write(Utils.intToBytes(key.length()));
-                        metaStream.write(key.getBytes());
-                        metaStream.write(Utils.intToBytes(fileMeta.get(key).length()));
-                        metaStream.write(fileMeta.get(key).getBytes());
-                    }
-                } catch(IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        byte[] meta = metaStream.toByteArray();
-
         ByteArrayOutputStream mftStream = new ByteArrayOutputStream();
         traverse(root, new FSAction() {
             @Override
@@ -219,8 +191,6 @@ public class FileSystem {
                     mftStream.write(obj.isDirectory() ? (byte) 0x44 : (byte) 0x46);
                     if(!obj.isDirectory()) {
                         mftStream.write(Utils.intToBytes(dataStartIndices.get(obj)));
-                        mftStream.write(Utils.intToBytes(metaStartIndices.get(obj)));
-                        mftStream.write(Utils.intToBytes(((FSFile) obj).meta.size()));
                     }
                     mftStream.write(Utils.intToBytes(obj.getPath().length()));
                     mftStream.write(obj.getPath().getBytes());
@@ -231,13 +201,11 @@ public class FileSystem {
         });
         byte[] mft = mftStream.toByteArray();
 
-        byte[] output = new byte[data.length + mft.length + meta.length + 12];
+        byte[] output = new byte[data.length + mft.length + 12];
         System.arraycopy(Utils.intToBytes(mft.length), 0, output, 0, 4);
         System.arraycopy(Utils.intToBytes(data.length), 0, output, 4, 4);
-        System.arraycopy(Utils.intToBytes(meta.length), 0, output, 8, 4);
         System.arraycopy(mft, 0, output, 12, mft.length);
         System.arraycopy(data, 0, output, 12 + mft.length, data.length);
-        System.arraycopy(meta, 0, output, 12 + mft.length + data.length, meta.length);
         return output;
     }
 
@@ -255,20 +223,12 @@ public class FileSystem {
         }
         byte[] mft = new byte[Utils.bytesToInt(Arrays.copyOfRange(full, 0, 4))];
         byte[] data = new byte[Utils.bytesToInt(Arrays.copyOfRange(full, 4, 8))];
-        byte[] meta = new byte[Utils.bytesToInt(Arrays.copyOfRange(full, 8, 12))];
-        System.arraycopy(full, 12, mft, 0, mft.length);
-        System.arraycopy(full, 12 + mft.length, data, 0, data.length);
-        System.arraycopy(full, 12 + mft.length + data.length, meta, 0, meta.length);
         for(int i = 0; i < mft.length; i++) {
             boolean isDirectory = mft[i] == (byte) 0x44;
             i++;
-            int startIndex = 0, metaIndex = 0, metaEntries = 0;
+            int startIndex = 0;
             if(!isDirectory) {
                 startIndex = Utils.bytesToInt(Arrays.copyOfRange(mft, i, i + 4));
-                i += 4;
-                metaIndex = Utils.bytesToInt(Arrays.copyOfRange(mft, i, i + 4));
-                i += 4;
-                metaEntries = Utils.bytesToInt(Arrays.copyOfRange(mft, i, i + 4));
                 i += 4;
             }
             int pathSize = Utils.bytesToInt(Arrays.copyOfRange(mft, i, i + 4));
@@ -286,18 +246,6 @@ public class FileSystem {
                 } else {
                     file.write(new byte[0]);
                 }
-                Map<String, String> fileMeta = new TreeMap<>();
-                while(metaEntries > 0) {
-                    int keySize = Utils.bytesToInt(Arrays.copyOfRange(meta, metaIndex, metaIndex + 4));
-                    if(keySize == Integer.MAX_VALUE) break;
-                    String key = new String(Arrays.copyOfRange(meta, metaIndex, metaIndex + keySize));
-                    metaIndex += keySize;
-                    int entrySize = Utils.bytesToInt(Arrays.copyOfRange(meta, metaIndex, metaIndex + 4));
-                    fileMeta.put(key, entrySize == 0 ? ""
-                            : new String(Arrays.copyOfRange(meta, metaIndex, metaIndex + entrySize)));
-                    metaIndex += entrySize;
-                }
-                file.meta = fileMeta;
             }
             i += pathSize - 1;
         }

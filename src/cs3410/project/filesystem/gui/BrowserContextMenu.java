@@ -36,12 +36,6 @@ public class BrowserContextMenu extends JPopupMenu {
                 }
             });
             add(rename);
-            JMenuItem editMeta = new JMenuItem("Edit Metadata");
-            editMeta.addActionListener(e -> {
-                JOptionPane.showMessageDialog(this, "This operation has not yet been implemented", "Unimplemented",
-                        JOptionPane.WARNING_MESSAGE);
-            });
-            add(editMeta);
         }
         JMenuItem delete = new JMenuItem("Delete");
         add(delete);

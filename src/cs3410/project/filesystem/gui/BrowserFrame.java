@@ -416,7 +416,7 @@ public class BrowserFrame extends JFrame {
         if(delta < 0 && table.getFont().getSize() <= 2) return;
         if(delta > 0 && table.getFont().getSize() >= 100) return;
         Font fontPlain = new Font(table.getFont().getName(), Font.PLAIN, table.getFont().getSize() + delta);
-        Font fontBold = new Font(table.getFont().getName(), Font.BOLD, table.getFont().getSize() + delta);
+        Font fontBold = fontPlain.deriveFont(Font.BOLD);
         for(Component c : sidebar.getComponents()) {
             c.setFont(fontBold);
             if(c instanceof JButton) ((JButton) c).setMargin(new Insets(2, 5, 2, 5));
