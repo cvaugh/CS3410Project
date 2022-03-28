@@ -33,6 +33,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.UIManager;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.table.AbstractTableModel;
 
@@ -46,7 +47,20 @@ import cs3410.project.filesystem.Utils;
 public class BrowserFrame extends JFrame {
     private static final long serialVersionUID = -6275492324105494374L;
 
-    protected static final JFileChooser FILE_CHOOSER = new JFileChooser();
+    protected static final JFileChooser FILE_CHOOSER;
+    static {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        FILE_CHOOSER = new JFileChooser();
+        try {
+            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
     private static final FileFilter FS_FILTER = new FileFilter() {
         @Override
         public boolean accept(File f) {
