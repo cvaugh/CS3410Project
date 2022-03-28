@@ -31,6 +31,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.filechooser.FileFilter;
 import javax.swing.table.AbstractTableModel;
 
 import cs3410.project.filesystem.FSDirectory;
@@ -44,6 +45,17 @@ public class BrowserFrame extends JFrame {
     private static final long serialVersionUID = -6275492324105494374L;
 
     private static final JFileChooser FILE_CHOOSER = new JFileChooser();
+    private static final FileFilter FS_FILTER = new FileFilter() {
+        @Override
+        public boolean accept(File f) {
+            return f.getName().endsWith(".fs");
+        }
+
+        @Override
+        public String getDescription() {
+            return "File System Containers (.fs)";
+        }
+    };
     private static final Map<String, String> MIME_CACHE = new HashMap<>();
     private static final Map<String, String> DESCRIPTION_CACHE = new HashMap<>();
     private static final Map<String, Integer> ICON_CACHE = new HashMap<>();
@@ -62,8 +74,10 @@ public class BrowserFrame extends JFrame {
     private final JButton deleteSelected = new JButton("Delete Selected");
     private final JButton search = new JButton("Search");
     public FSDirectory currentRoot;
+    private FileFilter defaultFilter;
 
     public BrowserFrame() {
+        defaultFilter = FILE_CHOOSER.getFileFilter();
         FILE_CHOOSER.setCurrentDirectory(new File("."));
         try {
             loadMetadata();
@@ -163,6 +177,7 @@ public class BrowserFrame extends JFrame {
         menuItem.setMnemonic(KeyEvent.VK_N);
         menuItem.addActionListener(e -> {
             FILE_CHOOSER.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            FILE_CHOOSER.setFileFilter(FS_FILTER);
             int rt = FILE_CHOOSER.showSaveDialog(this);
             if(rt == JFileChooser.APPROVE_OPTION) {
                 if(FILE_CHOOSER.getSelectedFile().exists()) {
@@ -180,6 +195,7 @@ public class BrowserFrame extends JFrame {
         menuItem.setMnemonic(KeyEvent.VK_O);
         menuItem.addActionListener(e -> {
             FILE_CHOOSER.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            FILE_CHOOSER.setFileFilter(FS_FILTER);
             int rt = FILE_CHOOSER.showOpenDialog(this);
             if(rt == JFileChooser.APPROVE_OPTION) {
                 try {
@@ -198,6 +214,7 @@ public class BrowserFrame extends JFrame {
         importFile.setMnemonic(KeyEvent.VK_I);
         importFile.addActionListener(e -> {
             FILE_CHOOSER.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+            FILE_CHOOSER.setFileFilter(defaultFilter);
             int rt = FILE_CHOOSER.showOpenDialog(this);
             if(rt == JFileChooser.APPROVE_OPTION) {
                 try {
@@ -217,6 +234,8 @@ public class BrowserFrame extends JFrame {
         exportFile.setEnabled(false);
         exportFile.setMnemonic(KeyEvent.VK_E);
         exportFile.addActionListener(e -> {
+            FILE_CHOOSER.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            FILE_CHOOSER.setFileFilter(defaultFilter);
             JOptionPane.showMessageDialog(this, "This operation has not yet been implemented", "Unimplemented",
                     JOptionPane.WARNING_MESSAGE);
         });
