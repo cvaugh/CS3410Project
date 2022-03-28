@@ -32,6 +32,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.table.AbstractTableModel;
 
@@ -74,6 +75,7 @@ public class BrowserFrame extends JFrame {
     private final JButton newDirectory = new JButton("Create Directory");
     private final JButton deleteSelected = new JButton("Delete Selected");
     private final JButton search = new JButton("Search");
+    private final JTextField urlBar = new JTextField();
     public FSDirectory currentRoot;
     protected FileFilter defaultFileFilter;
 
@@ -115,7 +117,7 @@ public class BrowserFrame extends JFrame {
                 scrollPane.revalidate();
             }
         });
-        this.getContentPane().setLayout(new BoxLayout(this.getContentPane(), BoxLayout.X_AXIS));
+        this.getContentPane().setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
         JMenuBar menuBar = new JMenuBar();
         fileMenu.setMnemonic(KeyEvent.VK_F);
         fileMenu.setEnabled(false);
@@ -166,12 +168,6 @@ public class BrowserFrame extends JFrame {
         menuItem.setMnemonic(KeyEvent.VK_S);
         menuItem.addActionListener(e -> {
             openSearch();
-        });
-        toolsMenu.add(menuItem);
-        menuItem = new JMenuItem("Graphical Tree");
-        menuItem.setMnemonic(KeyEvent.VK_T);
-        menuItem.addActionListener(e -> {
-            showTree();
         });
         toolsMenu.add(menuItem);
         menuBar.add(toolsMenu);
@@ -267,7 +263,22 @@ public class BrowserFrame extends JFrame {
         });
         search.setAlignmentX(Component.CENTER_ALIGNMENT);
         sidebar.add(search);
-        add(sidebar);
+        urlBar.setPreferredSize(new Dimension(800, 20));
+        urlBar.setEnabled(false);
+        urlBar.addActionListener(e -> {
+            if(urlBar.getText().isBlank()) return;
+            FileSystemObject obj = Main.fs.getObject(urlBar.getText().trim());
+            if(obj == null) {
+                JOptionPane.showMessageDialog(this, String.format("The path \"%s\" does not exist", urlBar.getText()),
+                        "Path Not Found", JOptionPane.WARNING_MESSAGE);
+            } else {
+                open(obj);
+            }
+        });
+        add(urlBar);
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+        panel.add(sidebar);
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -287,7 +298,8 @@ public class BrowserFrame extends JFrame {
         table.setFont(new Font(table.getFont().getName(), Font.PLAIN, 14));
         scrollPane.setPreferredSize(new Dimension(800, 800));
         scrollPane.setViewportView(table);
-        add(scrollPane);
+        panel.add(scrollPane);
+        add(panel);
         pack();
         setLocationRelativeTo(null);
         table.setRowHeight(table.getRowHeight() + 4);
@@ -335,12 +347,6 @@ public class BrowserFrame extends JFrame {
         searchFrame.setVisible(true);
     }
 
-    private void showTree() {
-        // TODO
-        JOptionPane.showMessageDialog(this, "This operation has not yet been implemented", "Unimplemented",
-                JOptionPane.WARNING_MESSAGE);
-    }
-
     public void open(FileSystemObject obj) {
         if(obj.isDirectory()) {
             update((FSDirectory) obj);
@@ -363,6 +369,7 @@ public class BrowserFrame extends JFrame {
     public void update(FSDirectory root) {
         currentRoot = root;
         setTitle(Main.fs.container.getName() + " > " + currentRoot);
+        urlBar.setText(currentRoot.isRoot() ? "/" : currentRoot.getPath());
         table.setModel(new AbstractTableModel() {
             @Override
             public int getRowCount() {
@@ -422,6 +429,7 @@ public class BrowserFrame extends JFrame {
     private void init() {
         fileMenu.setEnabled(true);
         toolsMenu.setEnabled(true);
+        urlBar.setEnabled(true);
         newFile.setEnabled(true);
         newDirectory.setEnabled(true);
         search.setEnabled(true);

@@ -271,11 +271,12 @@ public class FileSystem {
      * @see #getObject(String)
      */
     public FileSystemObject getObject(FSDirectory parent, String path) {
+        if(path.isBlank()) return null;
+        if(path.equals("/")) return root;
         if(path.charAt(0) == '/') {
             parent = root;
             path = path.substring(1);
         }
-        if(path.isEmpty()) return null;
         if(!path.contains("/")) return parent.getChild(path);
         String[] splitPath = path.split("/", 2);
         if(splitPath.length == 0) return null;
@@ -285,7 +286,7 @@ public class FileSystem {
         } else if(obj.isDirectory()) {
             return getObject((FSDirectory) obj, splitPath[1]);
         } else {
-            return null;
+            return obj;
         }
     }
 
