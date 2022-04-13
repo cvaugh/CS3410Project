@@ -18,9 +18,9 @@ public class Main {
         boolean forceExtract = false, printBeforeExit = false;
         if(args.length > 0) {
             // Parse command line arguments
-            // TODO parse arguments in a more standard way
             try {
                 for(int i = 0; i < args.length; i++) {
+                    // Load the specified file system container
                     if(args[i].equals("-i")) {
                         File file = new File(args[i + 1]);
                         if(file.isDirectory()) {
@@ -70,6 +70,7 @@ public class Main {
             }
         }
 
+        // If no arguments are supplied, open a GUI.
         if(args.length == 0) {
             BrowserFrame browser = new BrowserFrame();
             browser.setVisible(true);

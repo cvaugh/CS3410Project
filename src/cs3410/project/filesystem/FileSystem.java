@@ -18,15 +18,10 @@ public class FileSystem {
      * This file stores the contents of the files contained within the file system
      */
     public File container;
-    /**
-     * This file stores the structure of the file system
-     */
-    public File mftContainer;
     private byte[] lastIOHash;
 
     public FileSystem(File container) {
         this.container = container;
-        this.mftContainer = new File(container.getParentFile(), container.getName() + ".mft");
     }
 
     /**
@@ -118,31 +113,18 @@ public class FileSystem {
 
     /**
      * Writes the file system to the container file on the disk.
-     * <br><br>
-     * Each file consists of four bytes containing the size of the file's contents,
-     * in bytes, followed by the contents. For example, a file consisting of only
-     * the text "test 123" would be written as follows:
-     * <pre>
-     * 00 00 00 08 74 65 73 74 20 31 32 33
-     * ^---------^ ^---------------------^
-     *    size             content
-     * </pre>
-     * The structure of the file system is written to a separate file. The location
-     * of each object in the file system is represented by the object's absolute path
-     * preceded by a single byte to determine if the object is a <tt>FSFile</tt> or
-     * <tt>FSDirectory</tt> (<tt>0x46</tt> for files and <tt>0x44</tt> for directories)
-     * and, if the object is a <tt>FSFile</tt>, the starting index of the object within
-     * the container file. Following the index is the length of the object's path, in
-     * bytes.
-     * <br><br>
-     * For example, a <tt>FSFile</tt> with the name "file.txt" and starting index 100
-     * that is an immediate child of file system's root would be written as follows:
-     * <pre>
-     * 46 00 00 00 64 00 00 00 09 2F 74 65 73 74 2E 74 78 74
-     * ^  ^---------^ ^---------^ ^------------------------^
-     * F     index     path size             path
-     * </pre>
+     * See {@link #getFullBytes()} for the format of the container.
+     * <br>
+     * Before writing the container to the disk, the method checks
+     * whether the file system has changed since the last time an
+     * I/O operation took place. If not, the method does nothing.
+     * If the file system has changed, it writes the container to
+     * the disk and recalculates the hash of the file system's
+     * contents.
+     * 
      * @see #readContainer()
+     * @see #hasChangedSinceLastIO(byte[])
+     * @see #getFullBytes()
      * @throws IOException
      */
     public void writeContainer() throws IOException {
@@ -156,6 +138,41 @@ public class FileSystem {
         }
     }
 
+    /**
+     * The container file consists of two sections: the file table and the data.
+     * The first four bytes of the file store the size of the file table, in bytes,
+     * while the next four bytes store the size of the data section.
+     * <br><br>
+     * <b>File table section</b><br>
+     * The file table stores the paths of each object within the file system.
+     * For files, it also denotes where the file's data begins in the data section.
+     * For an example, a file with the path <tt>/docs/info.txt</tt> might have the
+     * following entry in the file table:
+     * <pre>
+     * 46 00 00 12 C8 00 00 00 0E 2F 64 6F 63 73 2F 69 6E 66 6F 2E 74 78 74
+     * ^  ^---------^ ^---------^ ^---------------------------------------^
+     * F  data index   path size                    path
+     * </pre>
+     * In the case of a directory, the <tt>data index</tt> bytes are omitted and the
+     * byte representing the type of the object, labelled <tt>F</tt> above, is 44
+     * (ASCII "D") rather than 46 (ASCII "F").
+     * <br><br>
+     * <b>Data section</b><br>
+     * The contents of each FSFile within the file system are stored back-to-back in
+     * the data section. Starting at the index referenced by the file's entry in the
+     * file table, the file's data consists of four bytes denoting the size of the
+     * file, in bytes, followed by the contents of the file. For a simple text file
+     * containing only the ASCII text <tt>test</tt> followed by a line break
+     * character, the data would be as follows:
+     * <pre>
+     * 00 00 00 05 74 65 73 74 0A
+     * ^---------^ ^------------^
+     *    size        contents
+     * </pre>
+     * 
+     * @see #writeContainer()
+     * @return The structure and contents of the file system as an array of bytes.
+     */
     private byte[] getFullBytes() {
         Map<FSFile, Integer> dataStartIndices = new HashMap<FSFile, Integer>();
         ByteArrayOutputStream dataStream = new ByteArrayOutputStream();
@@ -211,7 +228,9 @@ public class FileSystem {
 
     /**
      * Reads the container file from the disk.
+     * 
      * @see #writeContainer()
+     * @see #getFullBytes()
      * @throws IOException
      */
     public void readContainer() throws IOException {
@@ -299,6 +318,9 @@ public class FileSystem {
         return getObject(root, path);
     }
 
+    /**
+     * Appends a tree representation of the <tt>root</tt> FSDirectory's descendants to <tt>sb</tt>.
+     */
     private void getTreeAsString(FSDirectory root, int depth, int index, StringBuilder sb, boolean utf8) {
         if(depth != 0) {
             for(int i = 0; i < depth - 1; i++) {
@@ -344,6 +366,10 @@ public class FileSystem {
         return sb.toString();
     }
 
+    /**
+     * Loads the file system contained within the specified container.
+     * @throws IOException
+     */
     public static void load(File container) throws IOException {
         if(container.isDirectory()) throw new RuntimeException("Container may not be a directory");
         Main.fs = new FileSystem(container);
@@ -351,10 +377,13 @@ public class FileSystem {
             Main.fs.readContainer();
         } else {
             Main.fs.container.createNewFile();
-            Main.fs.mftContainer.createNewFile();
         }
     }
 
+    /**
+     * @return True if <tt>currentData</tt> does not match the previous hash
+     * or if the previous hash is null, otherwise false. 
+     */
     public boolean hasChangedSinceLastIO(byte[] currentData) {
         if(lastIOHash == null) return true;
         byte[] currentHash;
@@ -370,6 +399,12 @@ public class FileSystem {
         return false;
     }
 
+    /**
+     * @param toImport The external file to be imported.
+     * @param destination The path at which to put the imported file within the file system.
+     * @return False if the destination already exists, otherwise true.
+     * @throws IOException
+     */
     public boolean importFile(File toImport, String destination) throws IOException {
         if(destination.contains("%s")) {
             destination = String.format(destination, toImport.getName());
@@ -389,12 +424,20 @@ public class FileSystem {
         }
     }
 
+    /**
+     * @see #importFile(File, String)
+     */
     public boolean importFile(File toImport, String destination, BrowserFrame browser) throws IOException {
         boolean r = importFile(toImport, destination);
         browser.update(browser.currentRoot);
         return r;
     }
 
+    /**
+     * @param overwrite If true, overwrites the file at the destination path if it exists.
+     * @return True if the file could be exported, otherwise false.
+     * @throws IOException
+     */
     public boolean exportFile(FSFile toExport, File destination, boolean overwrite) throws IOException {
         if((destination.exists() && !overwrite) || destination.isDirectory()) return false;
         Files.write(destination.toPath(), toExport.data);

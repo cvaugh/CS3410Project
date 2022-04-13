@@ -36,6 +36,9 @@ public class Utils {
         return i;
     }
 
+    /**
+     * @return The bytes that make up the given integer
+     */
     public static byte[] intToBytes(int n) {
         byte[] b = new byte[4];
         b[0] = (byte) (n >>> 24);
@@ -45,6 +48,12 @@ public class Utils {
         return b;
     }
 
+    /**
+     * @return The given integer as a human-readable string using SI prefixes,
+     * rounded to two decimal places.
+     * <br>
+     * For example, <tt>humanReadableSize(1234567)</tt> would return <tt>1.23 MB</tt>.
+     */
     public static String humanReadableSize(int bytes) {
         double b = (double) bytes;
         int magnitude = 0;

@@ -49,12 +49,14 @@ public class BrowserFrame extends JFrame {
 
     protected static final JFileChooser FILE_CHOOSER;
     static {
+        // Attempts to set the JFileChooser's look and feel to the system style
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch(Exception e) {
             e.printStackTrace();
         }
         FILE_CHOOSER = new JFileChooser();
+        // Resets the look and feel to Java's default for all other Swing components
         try {
             UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
         } catch(Exception e) {
@@ -108,6 +110,7 @@ public class BrowserFrame extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
+                // If a file system has been loaded, save it before exiting.
                 if(Main.fs != null) {
                     try {
                         Main.fs.writeContainer();
@@ -126,12 +129,14 @@ public class BrowserFrame extends JFrame {
                 sidebar.setMaximumSize(new Dimension(getWidth() / 4, Integer.MAX_VALUE));
                 scrollPane.setMaximumSize(new Dimension((getWidth() / 4) * 3, Integer.MAX_VALUE));
                 // revalidate() is necessary here due to a bug in the Windows implementation of
-                // Swing when maximizing a JFrame
+                // Swing when maximizing a JFrame.
                 sidebar.revalidate();
                 scrollPane.revalidate();
             }
         });
         this.getContentPane().setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
+        // The following code is very redundant due to how Swing handles adding
+        // components.
         JMenuBar menuBar = new JMenuBar();
         fileMenu.setMnemonic(KeyEvent.VK_F);
         fileMenu.setEnabled(false);
@@ -297,8 +302,10 @@ public class BrowserFrame extends JFrame {
             @Override
             public void mousePressed(MouseEvent e) {
                 if(e.getButton() == MouseEvent.BUTTON3) {
+                    // Show a context menu when the table is right-clicked
                     new BrowserContextMenu(BrowserFrame.this).show(e.getComponent(), e.getX(), e.getY());
                 } else if(e.getClickCount() == 2) {
+                    // Open the selected file when the table is double-clicked
                     int row = table.rowAtPoint(e.getPoint());
                     if(row == 0 && !currentRoot.isRoot()) {
                         update(currentRoot.parent);
@@ -320,6 +327,9 @@ public class BrowserFrame extends JFrame {
         updateFontSize(0);
     }
 
+    /**
+     * Shows a prompt for creating a new empty file in the current directory.
+     */
     private void newFile() {
         String name = JOptionPane.showInputDialog("Enter a name for the file:");
         if(name == null || name.isBlank()) return;
@@ -333,6 +343,9 @@ public class BrowserFrame extends JFrame {
         }
     }
 
+    /**
+     * Shows a prompt for creating a new directory in the current directory.
+     */
     private void newDirectory() {
         String name = JOptionPane.showInputDialog("Enter a name for the directory:");
         if(name == null || name.isBlank()) return;
@@ -346,6 +359,9 @@ public class BrowserFrame extends JFrame {
         }
     }
 
+    /**
+     * Deletes the objects currently selected in the JTable from the file system.
+     */
     protected void deleteSelected() {
         List<FileSystemObject> toRemove = new ArrayList<>();
         for(int row : table.getSelectedRows()) {
@@ -361,6 +377,14 @@ public class BrowserFrame extends JFrame {
         searchFrame.setVisible(true);
     }
 
+    /**
+     * Opens the given <tt>FileSystemObject</tt>.
+     * If the object is a <tt>FSDirectory</tt>, the frame is reloaded with the
+     * given object as the new root. If the object is a <tt>FSFile</tt>, it is
+     * opened using the application associated with the file type by the
+     * operating system.
+     * @see #update(FSDirectory)
+     */
     public void open(FileSystemObject obj) {
         if(obj.isDirectory()) {
             update((FSDirectory) obj);
@@ -380,6 +404,9 @@ public class BrowserFrame extends JFrame {
         }
     }
 
+    /**
+     * Reloads the frame with the given directory as the new root.
+     */
     public void update(FSDirectory root) {
         currentRoot = root;
         setTitle(Main.fs.container.getName() + " > " + currentRoot);
@@ -411,16 +438,11 @@ public class BrowserFrame extends JFrame {
                 } else {
                     FileSystemObject obj = getObjectAtRowIndex(rowIndex);
                     switch(columnIndex) {
-                    case 0:
+                    case 0: // First column: The name of the object prefixed by an icon.
                         return String.format("%c %s", obj.isDirectory() ? 0x1F4C1 : getIcon((FSFile) obj), obj.name);
-                    case 1: {
-                        if(obj.isDirectory()) {
-                            return "Directory";
-                        } else {
-                            return getDescription((FSFile) obj);
-                        }
-                    }
-                    case 2:
+                    case 1: // Second column: The type of the object.
+                        return obj.isDirectory() ? "Directory" : getDescription((FSFile) obj);
+                    case 2: // Third column: The size of the object.
                         return Utils.humanReadableSize(obj.getSize());
                     default:
                         return "";
@@ -457,6 +479,10 @@ public class BrowserFrame extends JFrame {
                 || (!currentRoot.isRoot() && (table.getRowCount() > 1 && table.getSelectedRow() != 0))));
     }
 
+    /**
+     * Increases or decreases the font size of most elements in the frame
+     * based on <tt>delta</tt>.
+     */
     private void updateFontSize(int delta) {
         if(delta < 0 && table.getFont().getSize() <= 2) return;
         if(delta > 0 && table.getFont().getSize() >= 100) return;
@@ -470,21 +496,39 @@ public class BrowserFrame extends JFrame {
         table.setRowHeight(table.getRowHeight() + delta);
     }
 
+    /**
+     * @return The most likely MIME type of the given file based on its extension,
+     * or an empty string if no type association exists.
+     */
     protected static String getMimeType(FSFile file) {
         if(!file.name.contains(".")) return "";
         return MIME_CACHE.getOrDefault(file.name.substring(file.name.lastIndexOf('.', file.name.length())), "");
     }
 
+    /**
+     * @return A <tt>char</tt> to be used as an icon for the given file, based
+     * on its extension.
+     * @see #getMimeType(FSFile)
+     */
     protected static int getIcon(FSFile file) {
         if(!file.name.contains(".")) return 0x1F4C4;
         return ICON_CACHE.getOrDefault(getMimeType(file), 0x1F4C4);
     }
 
+    /**
+     * @return A description of the given file's type, based on its extension.
+     * @see #getMimeType(FSFile)
+     */
     protected static String getDescription(FSFile file) {
         if(!file.name.contains(".")) return "File";
         return DESCRIPTION_CACHE.getOrDefault(getMimeType(file), "File");
     }
 
+    /**
+     * Attempts to load the type associations, icons, and descriptions of various file types
+     * if an <tt>assets</tt> directory exists in the working directory of the program.
+     * @throws IOException
+     */
     private static void loadMetadata() throws IOException {
         if(isMetadataLoaded) return;
         File assetsDir = new File("assets");

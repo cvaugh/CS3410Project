@@ -101,6 +101,22 @@ public class SearchFrame extends JFrame {
         table.setRowHeight(table.getRowHeight() + 4);
     }
 
+    /**
+     * Searches the file system for a file name matching the contents of the
+     * {@link #query} field. Results are placed in the {@link #results} array.
+     * <br><br>
+     * If {@link #useRegex} is checked, the method assumes that the content of
+     * the text field is a regular expression.
+     * <br>
+     * If {@link #matchExact} is checked, the method only matches files whose
+     * names match the query exactly.
+     * <br>
+     * If {@link #matchCase} is checked, the method includes partial maches
+     * whose case matches the query's case.
+     * <br>
+     * If nothing of the above are checked, the method includes partial matches
+     * regardless of case.
+     */
     private void search() {
         FileSet found = new FileSet();
         if(!query.getText().isBlank()) {

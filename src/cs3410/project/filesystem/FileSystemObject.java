@@ -32,21 +32,14 @@ public abstract class FileSystemObject implements Comparable<FileSystemObject> {
     }
 
     /**
-     * @return Whether this object is orphaned from the file system.
-     */
-    public boolean isOrphan() {
-        return parent == null || Main.fs.exists(this.getPath());
-    }
-
-    /**
-     * @return Whether this object is the file system's root directory.
+     * @return Whether this object is the current file system's root directory.
      */
     public boolean isRoot() {
         return this.equals(Main.fs.root);
     }
 
     /**
-     * @return Whether this object is an instance of <tt>FSDirectory</tt>
+     * @return Whether this object is an instance of <tt>FSDirectory</tt>.
      */
     public boolean isDirectory() {
         return this instanceof FSDirectory;
@@ -62,7 +55,9 @@ public abstract class FileSystemObject implements Comparable<FileSystemObject> {
     }
 
     /**
-     * @return The size of the file's content.
+     * @return The size of the object's content.
+     * @see FSFile#getSize()
+     * @see FSDirectory#getSize()
      */
     public abstract int getSize();
 }

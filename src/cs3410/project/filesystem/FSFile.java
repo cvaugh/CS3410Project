@@ -1,11 +1,9 @@
 package cs3410.project.filesystem;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 public class FSFile extends FileSystemObject {
     public byte[] data;
-    public boolean writing = false;
 
     public FSFile(FSDirectory parent, String name) {
         super(parent, name);
@@ -15,10 +13,11 @@ public class FSFile extends FileSystemObject {
         super(name);
     }
 
-    public void write(byte[] data) throws IOException {
+    /**
+     * Sets the file's contents to the given byte array.
+     */
+    public void write(byte[] data) {
         this.data = data;
-        writing = true;
-        writing = false;
     }
 
     /**
@@ -41,7 +40,10 @@ public class FSFile extends FileSystemObject {
     }
 
     /**
-     * @return The actual size of this file on the disk.
+     * @return The actual size of this file on the disk. 4 is added to the return
+     * value of {@link #getSize()} to account for the integer representing the
+     * file's size within the file system container's data section.
+     * @see FileSystem#getFullBytes()
      */
     public int getTotalSize() {
         return getSize() + 4;

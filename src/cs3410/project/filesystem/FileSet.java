@@ -68,6 +68,9 @@ public class FileSet implements Collection<FileSystemObject> {
         return true;
     }
 
+    /**
+     * @return The size of the given array, ignoring objects already in the FileSet.
+     */
     private int count(Object... objs) {
         if(objs.length == 0) return 0;
         int count = 0;
@@ -77,6 +80,9 @@ public class FileSet implements Collection<FileSystemObject> {
         return count;
     }
 
+    /**
+     * Resizes the {@link #objects} array to fit an additional <tt>count</tt> elements.
+     */
     private void fit(int count) {
         if(objects.length < size() + count) {
             FileSystemObject[] temp = new FileSystemObject[objects.length + count];
@@ -151,6 +157,11 @@ public class FileSet implements Collection<FileSystemObject> {
         objects = new FileSystemObject[0];
     }
 
+    /**
+     * Sorts the {@link #objects} array using merge sort.
+     * @see #sort()
+     * @see #merge(FileSystemObject[], int, int, int)
+     */
     public void sort() {
         FileSystemObject[] temp = new FileSystemObject[objects.length];
         int i = 0;
